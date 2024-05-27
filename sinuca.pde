@@ -1,75 +1,13 @@
 import java.util.ArrayList;
 
-class Coord
-{
-  public float x, y;
-  Coord(float x, float y)
-  {
-    this.x = x;
-    this.y = y;
-  }
-  Coord() 
-  {
-    this.x = 0.0f;
-    this.y = 0.0f;
-  }
-  
-  float mag2()
-  {
-    return this.x * this.x + this.y * this.y;
-  }
-  float mag()
-  {
-    return sqrt(this.mag2());
-  }
-  Coord unidade()
-  {
-    return this.div(this.mag());
-  }
-  
-  float ponto(Coord b)
-  {
-    return this.x * b.x + this.y * b.y;
-  }
-  Coord soma(Coord b)
-  {
-    return new Coord(this.x + b.x, this.y + b.y);
-  }
-  Coord sub(Coord b)
-  {
-    return new Coord(this.x - b.x, this.y - b.y);
-  }
-  Coord mult(float b)
-  {
-    return new Coord(this.x * b, this.y * b);
-  }
-  Coord div(float b)
-  {
-    return new Coord(this.x / b, this.y / b);
-  }
-};
-class Bola
-{
-  public static final float raio = 2.7f; //cm
-  Coord pos, vel;
-  boolean estaEmJogo;
-  
-  color cor;
-  
-  Bola()
-  {
-    this.estaEmJogo = true;
-    this.pos = new Coord();
-    this.vel = new Coord();
-    cor = color(0);
-  }
-};
-
 float jogoEscala = 1.0f;
-
 final Coord mesaTamanho = new Coord(254.0f, 127.0f); // cm x cm
+final float mesaAtritoAcel = 20.0f; // cm/s²
 
 Bola bolas[] = new Bola[16];
+boolean semMovimento = true;
+boolean preparandoTacada = false;
+
 void posicionarBolas()
 {
   bolas[0].pos.x = -mesaTamanho.x / 4;
@@ -114,6 +52,31 @@ void posicionarBolas()
   }
 }
 
+Coord mouseCoordMundo()
+{
+  return new Coord((mouseX - width / 2) / jogoEscala, (mouseY - height / 2) / jogoEscala);
+}
+void mousePressed()
+{
+  if (semMovimento)
+  {
+    if (mouseButton == LEFT)
+    {
+      Coord mouse = mouseCoordMundo();
+      if (mouse.sub(bolas[0].pos).mag() < Bola.raio)
+      {
+        preparandoTacada = !preparandoTacada;
+      }
+      else if (preparandoTacada)
+      {
+        preparandoTacada = false;
+        Coord mouseBola = bolas[0].pos.sub(mouse);
+        bolas[0].vel = mouseBola.unidade().mult(min(200.0f, max(10.0f, map(mouseBola.mag(), 10.0f, 70.0f, 1.0f, 200.0f))));
+      }
+    }
+  }
+}
+
 void setup()
 {
   size(1200, 800);
@@ -152,36 +115,50 @@ float dt = 0.0f;
 
 void draw()
 {
+  //bolas[0].pos.x = (mouseX - width / 2) / jogoEscala;
+  //bolas[0].pos.y = (mouseY - height / 2) / jogoEscala;
+  
   dt /= 10;
   for (int passo = 0; passo < 10; passo++)
   {
+    boolean semMovimentoTmp = true;
     //atualizar pos com vel e colisao bola x mesa
     for (int i = 0; i < bolas.length; i++)
     {
-      bolas[i].pos = bolas[i].pos.soma(bolas[i].vel.mult(dt));
-      
-      if (bolas[i].pos.x - Bola.raio < -mesaTamanho.x / 2)
+      if (bolas[i].vel.mag() != 0.0f)
       {
-        bolas[i].pos.x = -mesaTamanho.x / 2 + Bola.raio;
-        bolas[i].vel.x = -bolas[i].vel.x;
-      }
-      else if (bolas[i].pos.x + Bola.raio > mesaTamanho.x / 2)
-      {
-        bolas[i].pos.x = mesaTamanho.x / 2 - Bola.raio;
-        bolas[i].vel.x = -bolas[i].vel.x;
-      }
-      
-      if (bolas[i].pos.y - Bola.raio < -mesaTamanho.y / 2)
-      {
-        bolas[i].pos.y = -mesaTamanho.y / 2 + Bola.raio;
-        bolas[i].vel.y = -bolas[i].vel.y;
-      }
-      else if (bolas[i].pos.y + Bola.raio > mesaTamanho.y / 2)
-      {
-        bolas[i].pos.y = mesaTamanho.y / 2 - Bola.raio;
-        bolas[i].vel.y = -bolas[i].vel.y;
+        semMovimentoTmp = false;
+
+        bolas[i].pos = bolas[i].pos.soma(bolas[i].vel.mult(dt));
+        bolas[i].vel = bolas[i].vel.unidade().mult(max(0.0f, bolas[i].vel.mag() - mesaAtritoAcel * dt));
+        
+        if (bolas[i].pos.x - Bola.raio < -mesaTamanho.x / 2)
+        {
+          bolas[i].pos.x = -mesaTamanho.x / 2 + Bola.raio;
+          bolas[i].vel.x = -bolas[i].vel.x;
+        }
+        else if (bolas[i].pos.x + Bola.raio > mesaTamanho.x / 2)
+        {
+          bolas[i].pos.x = mesaTamanho.x / 2 - Bola.raio;
+          bolas[i].vel.x = -bolas[i].vel.x;
+        }
+        
+        if (bolas[i].pos.y - Bola.raio < -mesaTamanho.y / 2)
+        {
+          bolas[i].pos.y = -mesaTamanho.y / 2 + Bola.raio;
+          bolas[i].vel.y = -bolas[i].vel.y;
+        }
+        else if (bolas[i].pos.y + Bola.raio > mesaTamanho.y / 2)
+        {
+          bolas[i].pos.y = mesaTamanho.y / 2 - Bola.raio;
+          bolas[i].vel.y = -bolas[i].vel.y;
+        }
       }
     }
+    
+    semMovimento = semMovimentoTmp;
+    if (semMovimento)
+      break;
     
     //colisao bola x bola
     for (int i = 0; i < bolas.length; i++)
@@ -197,12 +174,15 @@ void draw()
             Coord jiUn = ji.div(jiMag); 
             float corrMag = (Bola.raio - jiMag / 2);
             Coord corr = jiUn.mult(corrMag);
+
+            bolas[i].pos = bolas[i].pos.soma(corr);
+            bolas[j].pos = bolas[j].pos.sub(corr);
             
-            bolas[i].pos.x += corr.x;
-            bolas[i].pos.y += corr.y;
+            Coord q = jiUn.mult(bolas[i].vel.ponto(jiUn) - bolas[j].vel.ponto(jiUn));
+            bolas[i].vel = bolas[i].vel.sub(q);
+            bolas[j].vel = bolas[j].vel.soma(q);
             
-            bolas[j].pos.x -= corr.x;
-            bolas[j].pos.y -= corr.y;
+            
           }
         }
       }
@@ -210,16 +190,18 @@ void draw()
   }
   
   //desenhar
-  background(0);
+  background(40,40,40);
   
   pushMatrix();
   translate(width / 2, height / 2);
   scale(jogoEscala);
   
   //desenhar mesa
-  fill(0, 50, 0);
+  fill(30, 57, 12);
+  strokeWeight(20);
+  stroke(54, 32, 12);
+  rect(-mesaTamanho.x / 2, -mesaTamanho.y / 2, mesaTamanho.x, mesaTamanho.y, 1.0f);
   strokeWeight(1);
-  stroke(0, 70, 0);
   rect(-mesaTamanho.x / 2, -mesaTamanho.y / 2, mesaTamanho.x, mesaTamanho.y, 1.0f);
   
   //dessenhar bolas
@@ -230,6 +212,14 @@ void draw()
     if (i < 9) stroke(bolas[i].cor);
     else stroke(255, 255, 255);
     circle(bolas[i].pos.x, bolas[i].pos.y, Bola.raio * 2);
+  }
+  
+  //desenhar tacada
+  if (preparandoTacada)
+  {
+    Coord mouse = mouseCoordMundo();
+    stroke(255, 0, bolas[0].pos.sub(mouseCoordMundo()).mag() > 70.0f ? 255 : 0);
+    line(bolas[0].pos.x, bolas[0].pos.y, mouse.x, mouse.y);
   }
 
   popMatrix();
