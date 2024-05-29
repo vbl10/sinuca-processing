@@ -3,7 +3,7 @@ import java.util.ArrayList;
 //unidade de distância:  cm
 //unidade de tempo:      s
 
-float jogoEscala = 1.0f;
+Jogo jogo = new Jogo();
 
 Mesa mesa = new Mesa(new Coord(254.0f, 127.0f), 3.7f, 20.0f);
 
@@ -13,13 +13,17 @@ boolean preparandoTacada = false;
 boolean posicionandoBolaBranca = false;
 boolean posicionandoBolaBrancaValido = false;
 
+final int FERRAMENTA_JOGAR = 0;
+final int FERRAMENTA_MOVER = 1;
+int ferramenta = FERRAMENTA_JOGAR;
+boolean ferramentaMoverMovendo = false;
+Coord ferramentaMoverClique = new Coord();
+Coord ferramentaMoverTransAntiga = new Coord();
+
 void posicionarBolas()
 {
   bolas[0].pos.x = -mesa.tamanho.x / 4;
   bolas[0].pos.y = 0.0f;
-  
-  // 1, 2, 3, 4
-  // 1, 3, 6, 10
   
   
   ArrayList<Coord> posicoes = new ArrayList();
@@ -62,41 +66,86 @@ void posicionarBolas()
   }
 }
 
-Coord mouseCoordMundo()
+Coord mouseParaMundo()
 {
-  return new Coord((mouseX - width / 2) / jogoEscala, (mouseY - height / 2) / jogoEscala);
+  return jogo.telaParaMundo(new Coord(mouseX, mouseY));
+}
+Coord mouse()
+{
+  return new Coord(mouseX, mouseY);
 }
 void mousePressed()
 {
-  if (mouseButton == LEFT)
+  if (ferramenta == FERRAMENTA_JOGAR)
   {
-    if (posicionandoBolaBranca && posicionandoBolaBrancaValido)
+    if (mouseButton == LEFT)
     {
-      posicionandoBolaBranca = false;
-      bolas[0].estaEmJogo = true;
-      bolas[0].vel.def(0f, 0f);
-    }
-    else if (semMovimento)
-    {
-      Coord mouse = mouseCoordMundo();
-      if (mouse.sub(bolas[0].pos).mag() < Bola.raio)
+      if (posicionandoBolaBranca)
       {
-        preparandoTacada = !preparandoTacada;
+        if (posicionandoBolaBrancaValido)
+        {
+          posicionandoBolaBranca = false;
+          bolas[0].estaEmJogo = true;
+          bolas[0].vel.def(0f, 0f);
+        }
       }
-      else if (preparandoTacada)
+      else if (semMovimento)
       {
-        preparandoTacada = false;
-        Coord mouseBola = bolas[0].pos.sub(mouse);
-        bolas[0].vel = mouseBola.unidade().mult(min(200.0f, max(10.0f, map(mouseBola.mag(), 10.0f, 70.0f, 1.0f, 200.0f))));
+        Coord mouse = mouseParaMundo();
+        if (mouse.sub(bolas[0].pos).mag() < Bola.raio)
+        {
+          preparandoTacada = !preparandoTacada;
+        }
+        else if (preparandoTacada)
+        {
+          preparandoTacada = false;
+          Coord mouseBola = bolas[0].pos.sub(mouse);
+          bolas[0].vel = mouseBola.unidade().mult(min(200.0f, max(10.0f, map(mouseBola.mag(), 10.0f, 70.0f, 1.0f, 200.0f))));
+        }
+      }
+    }
+  }
+  else if (ferramenta == FERRAMENTA_MOVER)
+  {
+    if (mouseButton == LEFT)
+    {
+      ferramentaMoverMovendo = !ferramentaMoverMovendo;
+      if (ferramentaMoverMovendo)
+      {
+        ferramentaMoverClique.def(mouseX, mouseY);
+        ferramentaMoverTransAntiga.def(jogo.translacao);
       }
     }
   }
 }
+void mouseMoved()
+{
+  if (ferramenta == FERRAMENTA_MOVER)
+  {
+    if (ferramentaMoverMovendo)
+    {
+      jogo.translacao.def(
+        ferramentaMoverTransAntiga
+        .soma(mouse())
+        .sub(ferramentaMoverClique)
+      );
+    }
+  }
+}
+
 void keyPressed()
 {
   if (key == 'r')
   {
     posicionarBolas();
+  }
+  else if (key == 'j')
+  {
+    ferramenta = FERRAMENTA_JOGAR;
+  }
+  else if (key == 'm')
+  {
+    ferramenta = FERRAMENTA_MOVER;
   }
 }
 
@@ -104,10 +153,10 @@ void setup()
 {
   size(1200, 800);
   
-  jogoEscala = width * 0.7f / mesa.tamanho.x;
-  if (jogoEscala * mesa.tamanho.y > height * 0.7f)
+  jogo.escala = width * 0.7f / mesa.tamanho.x;
+  if (jogo.escala * mesa.tamanho.y > height * 0.7f)
   {
-    jogoEscala = height * 0.7f / mesa.tamanho.y;
+    jogo.escala = height * 0.7f / mesa.tamanho.y;
   }
   
   for (int i = 0; i < bolas.length; i++) bolas[i] = new Bola();
@@ -209,11 +258,11 @@ void draw()
     }
   }
   
-  if (semMovimento && posicionandoBolaBranca)
+  if (ferramenta == FERRAMENTA_JOGAR && semMovimento && posicionandoBolaBranca)
   {
     posicionandoBolaBrancaValido = true;
     Bola nBola = new Bola();
-    nBola.pos.def(mouseCoordMundo());
+    nBola.pos.def(mouseParaMundo());
     
     // colisão com mesa
     if (mesa.colideComEsq(nBola))
@@ -260,8 +309,7 @@ void draw()
   background(40,40,40);
   
   pushMatrix();
-  translate(width / 2, height / 2);
-  scale(jogoEscala);
+  jogo.aplicarMatriz();
   
   mesa.desenhar();
 
@@ -270,22 +318,35 @@ void draw()
     if (bolas[i].estaEmJogo)
       bolas[i].desenhar(i);
       
-  if (posicionandoBolaBranca && semMovimento)
+  if (ferramenta == FERRAMENTA_JOGAR)
   {
-    bolas[0].desenhar(posicionandoBolaBrancaValido);
-  }
+    if (posicionandoBolaBranca && semMovimento)
+    {
+      bolas[0].desenhar(posicionandoBolaBrancaValido);
+    }
+        
+    //desenhar tacada
+    if (preparandoTacada)
+    {
+      Coord mouse = mouseParaMundo();
+      strokeWeight(1);
+      stroke(255, 0, bolas[0].pos.sub(mouse).mag() > 70.0f ? 255 : 0);
+      line(bolas[0].pos.x, bolas[0].pos.y, mouse.x, mouse.y);
       
-  //desenhar tacada
-  if (preparandoTacada)
-  {
-    Coord mouse = mouseCoordMundo();
-    strokeWeight(1);
-    stroke(255, 0, bolas[0].pos.sub(mouseCoordMundo()).mag() > 70.0f ? 255 : 0);
-    line(bolas[0].pos.x, bolas[0].pos.y, mouse.x, mouse.y);
-    
+    }
   }
 
   popMatrix();
+  
+  textAlign(LEFT, TOP);
+  fill(255);
+  text(
+    "Ferramenta: " + (
+      ferramenta == FERRAMENTA_JOGAR ? "jogar" :
+      ferramenta == FERRAMENTA_MOVER ? "mover" : ""
+    ),
+    10, 10
+  );
   
   //medir tempo de geração desse quadro
   tp2 = millis();
