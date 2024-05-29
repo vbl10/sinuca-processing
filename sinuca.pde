@@ -10,6 +10,8 @@ Mesa mesa = new Mesa(new Coord(254.0f, 127.0f), 3.7f, 20.0f);
 Bola bolas[] = new Bola[16];
 boolean semMovimento = true;
 boolean preparandoTacada = false;
+boolean posicionandoBolaBranca = false;
+boolean posicionandoBolaBrancaValido = false;
 
 void posicionarBolas()
 {
@@ -53,6 +55,11 @@ void posicionarBolas()
     bolas[i].pos = posicoes.get(j);
     posicoes.remove(j);
   }
+  for (int i = 0; i < 16; i++)
+  {
+    bolas[i].vel.def(0.0f, 0.0f);
+    bolas[i].estaEmJogo = true;
+  }
 }
 
 Coord mouseCoordMundo()
@@ -61,9 +68,15 @@ Coord mouseCoordMundo()
 }
 void mousePressed()
 {
-  if (semMovimento)
+  if (mouseButton == LEFT)
   {
-    if (mouseButton == LEFT)
+    if (posicionandoBolaBranca && posicionandoBolaBrancaValido)
+    {
+      posicionandoBolaBranca = false;
+      bolas[0].estaEmJogo = true;
+      bolas[0].vel.def(0f, 0f);
+    }
+    else if (semMovimento)
     {
       Coord mouse = mouseCoordMundo();
       if (mouse.sub(bolas[0].pos).mag() < Bola.raio)
@@ -77,6 +90,13 @@ void mousePressed()
         bolas[0].vel = mouseBola.unidade().mult(min(200.0f, max(10.0f, map(mouseBola.mag(), 10.0f, 70.0f, 1.0f, 200.0f))));
       }
     }
+  }
+}
+void keyPressed()
+{
+  if (key == 'r')
+  {
+    posicionarBolas();
   }
 }
 
@@ -119,23 +139,23 @@ void draw()
         bolas[i].vel = bolas[i].vel.unidade().mult(max(0.0f, bolas[i].vel.mag() - mesa.atritoAcel * dt));
         
         // colisão com mesa
-        if (bolas[i].pos.x - Bola.raio < -mesa.tamanho.x / 2)
+        if (mesa.colideComEsq(bolas[i]))
         {
           bolas[i].pos.x = -mesa.tamanho.x / 2 + Bola.raio;
           bolas[i].vel.x = -bolas[i].vel.x;
         }
-        else if (bolas[i].pos.x + Bola.raio > mesa.tamanho.x / 2)
+        else if (mesa.colideComDir(bolas[i]))
         {
           bolas[i].pos.x = mesa.tamanho.x / 2 - Bola.raio;
           bolas[i].vel.x = -bolas[i].vel.x;
         }
         
-        if (bolas[i].pos.y - Bola.raio < -mesa.tamanho.y / 2)
+        if (mesa.colideComSup(bolas[i]))
         {
           bolas[i].pos.y = -mesa.tamanho.y / 2 + Bola.raio;
           bolas[i].vel.y = -bolas[i].vel.y;
         }
-        else if (bolas[i].pos.y + Bola.raio > mesa.tamanho.y / 2)
+        else if (mesa.colideComInf(bolas[i]))
         {
           bolas[i].pos.y = mesa.tamanho.y / 2 - Bola.raio;
           bolas[i].vel.y = -bolas[i].vel.y;
@@ -146,6 +166,9 @@ void draw()
         {
           if (bolas[i].pos.sub(mesa.cacapas[j]).mag() < mesa.cacapaRaio)
           {
+            if (i == 0)
+              posicionandoBolaBranca = true;
+
             bolas[i].estaEmJogo = false;
           }
         }
@@ -161,9 +184,9 @@ void draw()
     {
       if (bolas[i].estaEmJogo)
       {
-        for (int j = 0; j < bolas.length; j++)
+        for (int j = i + 1; j < bolas.length; j++)
         {
-          if (i != j && bolas[j].estaEmJogo)
+          if (bolas[j].estaEmJogo)
           {
             Coord ji = bolas[i].pos.sub(bolas[j].pos);
             float jiMag = ji.mag();
@@ -176,7 +199,7 @@ void draw()
               bolas[i].pos = bolas[i].pos.soma(corr);
               bolas[j].pos = bolas[j].pos.sub(corr);
               
-              Coord q = jiUn.mult(bolas[i].vel.ponto(jiUn) - bolas[j].vel.ponto(jiUn));
+              Coord q = jiUn.mult(bolas[i].vel.sub(bolas[j].vel).ponto(jiUn));
               bolas[i].vel = bolas[i].vel.sub(q);
               bolas[j].vel = bolas[j].vel.soma(q);
             }
@@ -184,6 +207,53 @@ void draw()
         }
       }
     }
+  }
+  
+  if (semMovimento && posicionandoBolaBranca)
+  {
+    posicionandoBolaBrancaValido = true;
+    Bola nBola = new Bola();
+    nBola.pos.def(mouseCoordMundo());
+    
+    // colisão com mesa
+    if (mesa.colideComEsq(nBola))
+        nBola.pos.x = -mesa.tamanho.x / 2 + Bola.raio;
+    else if (mesa.colideComDir(nBola))
+        nBola.pos.x = mesa.tamanho.x / 2 - Bola.raio;
+    
+    if (mesa.colideComSup(nBola))
+        nBola.pos.y = -mesa.tamanho.y / 2 + Bola.raio;
+    else if (mesa.colideComInf(nBola))
+        nBola.pos.y = mesa.tamanho.y / 2 - Bola.raio;    
+        
+    //colisão com caçapa
+    for (int j = 0; j < 6; j++)
+    {
+      Coord vCB = nBola.pos.sub(mesa.cacapas[j]);
+      float magCB = vCB.mag();
+      Coord unCB = vCB.div(magCB);
+      if (magCB < mesa.cacapaRaio)
+      {
+        nBola.pos = nBola.pos.soma(unCB.mult(mesa.cacapaRaio - magCB));
+        break;
+      }
+    }
+    
+    //colisao nBola x bola
+    for (int i = 0; i < bolas.length; i++)
+    {
+      if (bolas[i].estaEmJogo)
+      {
+        Coord vIB = nBola.pos.sub(bolas[i].pos);
+        if (vIB.mag() < Bola.raio * 2)
+        {
+          posicionandoBolaBrancaValido = false;
+          break;
+        }
+      }
+    }
+    
+    bolas[0].pos.def(nBola.pos);
   }
   
   //desenhar
@@ -200,12 +270,19 @@ void draw()
     if (bolas[i].estaEmJogo)
       bolas[i].desenhar(i);
       
+  if (posicionandoBolaBranca && semMovimento)
+  {
+    bolas[0].desenhar(posicionandoBolaBrancaValido);
+  }
+      
   //desenhar tacada
   if (preparandoTacada)
   {
     Coord mouse = mouseCoordMundo();
+    strokeWeight(1);
     stroke(255, 0, bolas[0].pos.sub(mouseCoordMundo()).mag() > 70.0f ? 255 : 0);
     line(bolas[0].pos.x, bolas[0].pos.y, mouse.x, mouse.y);
+    
   }
 
   popMatrix();

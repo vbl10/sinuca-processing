@@ -1,6 +1,11 @@
 class Coord
 {
   public float x, y;
+  Coord(Coord c)
+  {
+    x = c.x;
+    y = c.y;
+  }
   Coord(float x, float y)
   {
     this.x = x;
@@ -16,6 +21,12 @@ class Coord
   {
     this.x = x;
     this.y = y;
+    return this;
+  }
+  Coord def(Coord b)
+  {
+    x = b.x;
+    y = b.y;
     return this;
   }
   

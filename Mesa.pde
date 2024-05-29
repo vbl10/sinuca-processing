@@ -32,6 +32,27 @@ class Mesa
     cacapas[5] = cacapas[5].soma(new Coord(-2.0f, -2.0f));
   }
   
+  public boolean colideComEsq(Bola bola)
+  {
+    return bola.pos.x - Bola.raio < -tamanho.x / 2;
+  }
+  public boolean colideComDir(Bola bola)
+  {
+    return bola.pos.x + Bola.raio > tamanho.x / 2;
+  }
+  public boolean colideComSup(Bola bola)
+  {
+    return bola.pos.y - Bola.raio < -tamanho.y / 2;
+  }
+  public boolean colideComInf(Bola bola)
+  {
+    return bola.pos.y + Bola.raio > tamanho.y / 2;
+  }
+  public boolean colideCom(Bola bola)
+  {
+    return colideComEsq(bola) || colideComDir(bola) || colideComSup(bola) || colideComInf(bola);
+  }
+  
   public void desenhar()
   {
     fill(30, 57, 12);
