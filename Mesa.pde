@@ -58,9 +58,9 @@ class Mesa
     fill(30, 57, 12);
     strokeWeight(20);
     stroke(54, 32, 12);
-    rect(-tamanho.x / 2, -mesa.tamanho.y / 2, tamanho.x, tamanho.y, 1.0f);
+    rect(-tamanho.x / 2, -tamanho.y / 2, tamanho.x, tamanho.y, 1.0f);
     strokeWeight(1);
-    rect(-tamanho.x / 2, -mesa.tamanho.y / 2, tamanho.x, tamanho.y, 1.0f);
+    rect(-tamanho.x / 2, -tamanho.y / 2, tamanho.x, tamanho.y, 1.0f);
     
     //caçapas
     strokeWeight(0);
