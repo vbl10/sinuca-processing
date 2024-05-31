@@ -2,14 +2,14 @@ class Jogo
 {
   public float escala = 1f;
   public Coord translacao = new Coord();
-  
+  public float rotacao = 0f;
   Matriz matriz()
   {
     return 
       matrizIdentidade()
-      .mult(matrizTranslacao(new Coord(width / 2f, height / 2f)))
       .mult(matrizTranslacao(translacao))
       .mult(matrizEscala(new Coord(escala, escala)))
+      .mult(matrizRotacao(rotacao))
       ;
   }
   
@@ -25,8 +25,16 @@ class Jogo
   
   void aplicarMatriz()
   {
-    translate(width / 2, height / 2);
     translate(translacao.x, translacao.y);
     scale(escala);
+    rotate(rotacao);
+  }
+  
+  void atualizar(float dt)
+  {
+  }
+  
+  void desenhar()
+  {
   }
 }

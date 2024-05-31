@@ -149,9 +149,9 @@ Matriz matrizEscala(Coord s)
 Matriz matrizRotacao(float rad)
 {
   Matriz rot = matrizIdentidade();
-  rot.def(0, 0, cos(rad));
-  rot.def(0, 1, sin(rad));
-  rot.def(1, 0, -sin(rad));
-  rot.def(1, 1, cos(rad));
+  rot.def(0, 0, cos(-rad));
+  rot.def(0, 1, sin(-rad));
+  rot.def(1, 0, -sin(-rad));
+  rot.def(1, 1, cos(-rad));
   return rot;
 }

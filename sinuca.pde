@@ -76,45 +76,44 @@ Coord mouse()
 }
 void mousePressed()
 {
-  if (ferramenta == FERRAMENTA_JOGAR)
+  if (ferramenta == FERRAMENTA_JOGAR && mouseButton == LEFT)
   {
-    if (mouseButton == LEFT)
+    if (posicionandoBolaBranca)
     {
-      if (posicionandoBolaBranca)
+      if (posicionandoBolaBrancaValido)
       {
-        if (posicionandoBolaBrancaValido)
-        {
-          posicionandoBolaBranca = false;
-          bolas[0].estaEmJogo = true;
-          bolas[0].vel.def(0f, 0f);
-        }
+        posicionandoBolaBranca = false;
+        bolas[0].estaEmJogo = true;
+        bolas[0].vel.def(0f, 0f);
       }
-      else if (semMovimento)
+    }
+    else if (semMovimento)
+    {
+      Coord mouse = mouseParaMundo();
+      if (mouse.sub(bolas[0].pos).mag() < Bola.raio)
       {
-        Coord mouse = mouseParaMundo();
-        if (mouse.sub(bolas[0].pos).mag() < Bola.raio)
-        {
-          preparandoTacada = !preparandoTacada;
-        }
-        else if (preparandoTacada)
-        {
-          preparandoTacada = false;
-          Coord mouseBola = bolas[0].pos.sub(mouse);
-          bolas[0].vel = mouseBola.unidade().mult(min(200.0f, max(10.0f, map(mouseBola.mag(), 10.0f, 70.0f, 1.0f, 200.0f))));
-        }
+        preparandoTacada = !preparandoTacada;
+      }
+      else if (preparandoTacada)
+      {
+        preparandoTacada = false;
+        Coord mouseBola = bolas[0].pos.sub(mouse);
+        bolas[0].vel = mouseBola.unidade().mult(min(200.0f, max(10.0f, map(mouseBola.mag(), 10.0f, 70.0f, 1.0f, 200.0f))));
       }
     }
   }
-  else if (ferramenta == FERRAMENTA_MOVER)
+  else if ((ferramenta == FERRAMENTA_MOVER && mouseButton == LEFT) || mouseButton == RIGHT)
   {
-    if (mouseButton == LEFT)
+    ferramentaMoverMovendo = !ferramentaMoverMovendo;
+    if (ferramentaMoverMovendo)
     {
-      ferramentaMoverMovendo = !ferramentaMoverMovendo;
-      if (ferramentaMoverMovendo)
-      {
-        ferramentaMoverClique.def(mouseX, mouseY);
-        ferramentaMoverTransAntiga.def(jogo.translacao);
-      }
+      ferramenta = FERRAMENTA_MOVER;
+      ferramentaMoverClique.def(mouseX, mouseY);
+      ferramentaMoverTransAntiga.def(jogo.translacao);
+    }
+    else
+    {
+      ferramenta = FERRAMENTA_JOGAR;
     }
   }
 }
@@ -133,6 +132,23 @@ void mouseMoved()
   }
 }
 
+void mouseWheel(MouseEvent evento)
+{
+  Coord mouseTela = new Coord(mouseX, mouseY);
+  Coord mouseMundoAntigo = jogo.telaParaMundo(mouseTela);
+  
+  if (evento.getCount() > 0)
+      jogo.escala *= 1.2f;
+  else
+      jogo.escala /= 1.2f;
+
+  Coord mouseMundoNovo = jogo.telaParaMundo(mouseTela);
+  
+  Coord translacao = jogo.mundoParaTela(mouseMundoNovo.sub(mouseMundoAntigo));
+  
+  jogo.translacao.def(translacao);
+}
+
 void keyPressed()
 {
   if (key == 'r')
@@ -147,6 +163,23 @@ void keyPressed()
   {
     ferramenta = FERRAMENTA_MOVER;
   }
+  else if (key == 'x' || key == 'z')
+  {
+    Coord mouseTela = new Coord(mouseX, mouseY);
+    Coord mouseMundoAntigo = jogo.telaParaMundo(mouseTela);
+    
+    jogo.rotacao += (key == 'x' ? 1f : -1f) * PI / 180f;
+  
+    Coord mouseMundoNovo = jogo.telaParaMundo(mouseTela);
+    
+    Coord translacao = jogo.mundoParaTela(mouseMundoNovo.sub(mouseMundoAntigo));
+    
+    jogo.translacao.def(translacao);
+  }
+  else if (key == 'p')
+  {
+    print("mouseTela:        "); print(mouseX); print(' '); println(mouseY);
+  }
 }
 
 void setup()
@@ -158,6 +191,8 @@ void setup()
   {
     jogo.escala = height * 0.7f / mesa.tamanho.y;
   }
+  jogo.translacao.def(width / 2, height / 2);
+  
   
   for (int i = 0; i < bolas.length; i++) bolas[i] = new Bola();
   
