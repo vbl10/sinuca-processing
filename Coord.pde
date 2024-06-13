@@ -42,6 +42,10 @@ class Coord
   {
     return this.div(this.mag());
   }
+  Coord normal()
+  {
+    return new Coord(-y, x);
+  }
   
   float ponto(Coord b)
   {
@@ -51,9 +55,17 @@ class Coord
   {
     return new Coord(this.x + b.x, this.y + b.y);
   }
+  Coord soma(float x, float y)
+  {
+    return new Coord(this.x + x, this.y + y);
+  }
   Coord sub(Coord b)
   {
     return new Coord(this.x - b.x, this.y - b.y);
+  }
+  Coord sub(float x, float y)
+  {
+    return new Coord(this.x - x, this.y - y);
   }
   Coord mult(float b)
   {

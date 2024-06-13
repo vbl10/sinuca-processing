@@ -5,104 +5,75 @@ import java.util.ArrayList;
 
 Jogo jogo = new Jogo();
 
-final int FERRAMENTA_JOGAR = 0;
-final int FERRAMENTA_MOVER = 1;
-int ferramenta = FERRAMENTA_JOGAR;
-boolean ferramentaMoverMovendo = false;
-Coord ferramentaMoverClique = new Coord();
-Coord ferramentaMoverTransAntiga = new Coord();
+GuiPagina paginaInicial = new GuiPagina();
+GuiPagina paginaControles = new GuiPagina();
+GuiPagina paginaDificuldade = new GuiPagina();
+GuiPagina paginaCreditos = new GuiPagina();
 
-Coord mouse()
+GuiPagina paginaJogoCorridaContraTempo = new GuiPagina();
+GuiPagina paginaJogoLivre = new GuiPagina();
+GuiPagina paginaJogoTutorial = new GuiPagina();
+
+GuiPagina paginaPausa = new GuiPagina();
+
+
+GuiPagina paginaAtual = paginaInicial;
+GuiComponente componenteFocoMouse = null;
+GuiComponente componenteFocoTeclado = null;
+
+int tpCronometro = 0;
+
+void mouseMoved()
 {
-  return new Coord(mouseX, mouseY);
+  if (componenteFocoMouse == null || !componenteFocoMouse.mouseCapturado())
+  {  
+    GuiComponente novoFoco = paginaAtual.contemMouse(); 
+    if (novoFoco != componenteFocoMouse)
+    {
+      if (novoFoco != null)
+        novoFoco.aoMudarFocoMouse(true);
+      if (componenteFocoMouse != null)
+        componenteFocoMouse.aoMudarFocoMouse(false);
+      componenteFocoMouse = novoFoco;
+    }
+  }
+  if (componenteFocoMouse != null)
+  {
+    componenteFocoMouse.aoMoverMouse();
+  }
 }
 void mousePressed()
 {
-  if (ferramenta == FERRAMENTA_JOGAR && mouseButton == LEFT)
+  if (componenteFocoMouse != null)
   {
-    jogo.aoClicarMouse();
+    if (componenteFocoTeclado != componenteFocoMouse)
+    {
+      if (componenteFocoTeclado != null)
+        componenteFocoTeclado.aoMudarFocoTeclado(false);
+      componenteFocoTeclado = componenteFocoMouse;
+      componenteFocoTeclado.aoMudarFocoTeclado(true);
+    }
+    componenteFocoMouse.aoClicarMouse();
   }
-  else if ((ferramenta == FERRAMENTA_MOVER && mouseButton == LEFT) || mouseButton == RIGHT)
+  else if (componenteFocoTeclado != null)
   {
-    ferramentaMoverMovendo = !ferramentaMoverMovendo;
-    if (ferramentaMoverMovendo)
-    {
-      ferramenta = FERRAMENTA_MOVER;
-      ferramentaMoverClique.def(mouseX, mouseY);
-      ferramentaMoverTransAntiga.def(jogo.translacao);
-    }
-    else
-    {
-      ferramenta = FERRAMENTA_JOGAR;
-    }
+    componenteFocoTeclado.aoMudarFocoTeclado(false);
+    componenteFocoTeclado = null;
   }
 }
-void mouseMoved()
-{
-  if (ferramenta == FERRAMENTA_JOGAR)
-  {
-    jogo.aoMoverMouse();
-  }
-  else if (ferramenta == FERRAMENTA_MOVER)
-  {
-    if (ferramentaMoverMovendo)
-    {
-      jogo.translacao.def(
-        ferramentaMoverTransAntiga
-        .soma(mouse())
-        .sub(ferramentaMoverClique)
-      );
-    }
-  }
-}
-
 void mouseWheel(MouseEvent evento)
 {
-  Coord mouseTela = new Coord(mouseX, mouseY);
-  Coord mouseMundoAntigo = jogo.telaParaMundo(mouseTela);
-  
-  if (evento.getCount() > 0)
-      jogo.escala *= 1.2f;
-  else
-      jogo.escala /= 1.2f;
-
-  Coord mouseMundoNovo = jogo.telaParaMundo(mouseTela);
-  
-  Coord translacao = jogo.mundoParaTela(mouseMundoNovo.sub(mouseMundoAntigo));
-  
-  jogo.translacao.def(translacao);
+  if (componenteFocoMouse != null)
+  {
+    componenteFocoMouse.aoRolarRodaMouse(evento);
+  }
 }
 
 void keyPressed()
 {
-  if (key == 'r')
+  if (componenteFocoTeclado != null)
   {
-    jogo.reiniciar();
-  }
-  else if (key == 'j')
-  {
-    ferramenta = FERRAMENTA_JOGAR;
-  }
-  else if (key == 'm')
-  {
-    ferramenta = FERRAMENTA_MOVER;
-  }
-  else if (key == 'x' || key == 'z')
-  {
-    Coord mouseTela = new Coord(mouseX, mouseY);
-    Coord mouseMundoAntigo = jogo.telaParaMundo(mouseTela);
-    
-    jogo.rotacao += (key == 'x' ? 1f : -1f) * PI / 180f;
-  
-    Coord mouseMundoNovo = jogo.telaParaMundo(mouseTela);
-    
-    Coord translacao = jogo.mundoParaTela(mouseMundoNovo.sub(mouseMundoAntigo));
-    
-    jogo.translacao.def(translacao);
-  }
-  else if (key == 'p')
-  {
-    print("mouseTela:        "); print(mouseX); print(' '); println(mouseY);
+    componenteFocoTeclado.aoPressionarTecla();
   }
 }
 
@@ -118,6 +89,92 @@ void setup()
   jogo.translacao.def(width / 2, height / 2);
     
   cores.inicializar();
+  
+  textSize(16);
+  
+  //PAGINA INICIAL ========================================
+  paginaInicial.camadas.add(new GuiRotulo("Sinucão do Kleyson", new Coord(20f, 270f)));
+  paginaInicial.camadas.add(new GuiBotao("Corrida Contra o Tempo", new Coord(20f, 300f), new Coord(200f, 30f), new GuiTratadorDeEventoBotao() {
+    @Override
+    void aoAcionar(GuiBotao botao)
+    {
+      paginaAtual = paginaJogoCorridaContraTempo;
+      jogo.pausa = false;
+      jogo.reiniciar();
+    }
+  }));
+  //botao jogo livre (redirecionar para pagina jogo livre)
+  //botao tutorial (redirecionar para pagina tutorial)
+  //botao controles (redirecionar para pagina controles)
+  //botao dificuldade (redirecionar para pagina dificuldade)
+  //botao creditos (redirecionar para pagina creditos)
+
+  //PAGINA CONTROLES ======================================
+  paginaControles.camadas.add(new GuiRotulo("Controles", new Coord(20f, 200f)));
+  //rotulo com todos os controles
+  //botao voltar
+  
+  //PAGINA DIFICULDADE ====================================
+  paginaDificuldade.camadas.add(new GuiRotulo("Dificuldade", new Coord(20f, 200f)));
+  //botao facil (jogo.tacadaTrajetoria = true; jogo.tacadaTrajetoriaColisaoBola = true)
+  //botao medio (jogo.tacadaTrajetoria = true; jogo.tacadaTrajetoriaColisaoBola = false)
+  //botao dificil (jogo.tacadaTrajetoria = false; jogo.tacadaTrajetoriaColisaoBola = false)
+  //botao voltar
+  
+  //PAGINA CREDITOS =======================================
+  paginaCreditos.camadas.add(new GuiRotulo("Créditos", new Coord(20f, 200f)));
+  //rotulo com integrantes do grupo
+  //botao voltar
+  
+  GuiBotao botaoPausa = new GuiBotao("P", new Coord(10f, 10f), new Coord(30f, 30f), new GuiTratadorDeEventoBotao() {
+    @Override
+    void aoAcionar(GuiBotao botao)
+    {
+      jogo.pausa = true;
+      botao.aoMudarFocoTeclado(false);
+      componenteFocoTeclado = null;
+      paginaAtual.camadas.add(paginaPausa);
+    }
+  });
+  
+  //PAGINA CORRIDA CONTRA O TEMPO =========================
+  paginaJogoCorridaContraTempo.camadas.add(jogo);
+  //botao pausa (modificar classe botao para suportar icones e usar icone de lista)
+  paginaJogoCorridaContraTempo.camadas.add(botaoPausa);
+  paginaJogoCorridaContraTempo.camadas.add(new GuiTempo(new Coord(100f, 10f)));
+  
+  //PAGINA LIVRE ==========================================
+  
+  //PAGINA TUTORIAL =======================================
+  
+  //PAGINA PAUSA ==========================================
+  paginaPausa.camadas.add(new GuiRotulo("Pausa", new Coord(20f, 200f)));
+  paginaPausa.camadas.add(new GuiBotao("Continuar", new Coord(20f, 230f), new Coord(200f, 30f), new GuiTratadorDeEventoBotao() {
+    @Override
+    void aoAcionar(GuiBotao botao)
+    {
+      paginaAtual.camadas.remove(paginaAtual.camadas.size() - 1);
+      jogo.pausa = false;
+    }
+  }));
+  paginaPausa.camadas.add(new GuiBotao("Reiniciar", new Coord(20f, 260f), new Coord(200f, 30f), new GuiTratadorDeEventoBotao() {
+    @Override
+    void aoAcionar(GuiBotao botao)
+    {
+      paginaAtual.camadas.remove(paginaAtual.camadas.size() - 1);
+      jogo.pausa = false;
+      jogo.reiniciar();
+    }
+  }));
+  paginaPausa.camadas.add(new GuiBotao("Sair", new Coord(20f, 290f), new Coord(200f, 30f), new GuiTratadorDeEventoBotao() {
+    @Override
+    void aoAcionar(GuiBotao botao)
+    {
+      paginaAtual.camadas.remove(paginaAtual.camadas.size() - 1);
+      paginaAtual = paginaInicial;
+    }
+  }));
+  
 }
 
 
@@ -126,22 +183,11 @@ float dt = 0.0f;
 
 void draw()
 {
-  jogo.atualizar(dt);
+  paginaAtual.atualizar(dt);
   
-  //desenhar
-  background(40,40,40);
-  
-  jogo.desenhar();
-  
-  textAlign(LEFT, TOP);
-  fill(255);
-  text(
-    "Ferramenta: " + (
-      ferramenta == FERRAMENTA_JOGAR ? "jogar" :
-      ferramenta == FERRAMENTA_MOVER ? "mover" : ""
-    ),
-    10, 10
-  );
+  background(0);
+  paginaAtual.desenhar();
+   
   
   //medir tempo de geração desse quadro
   tp2 = millis();

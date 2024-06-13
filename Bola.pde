@@ -13,7 +13,7 @@ class Bola
   
   public void desenhar(int numero)
   {
-    strokeWeight(0);
+    noStroke();
     if (numero < 9)
     {
       fill(cores.bola[numero]);

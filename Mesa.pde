@@ -32,6 +32,23 @@ class Mesa
     cacapas[5] = cacapas[5].soma(new Coord(-2.0f, -2.0f));
   }
   
+  public Coord cantoSupEsq()
+  {
+    return new Coord(-tamanho.x/2, -tamanho.y/2);
+  }
+  public Coord cantoSupDir()
+  {
+    return new Coord(tamanho.x/2, -tamanho.y/2);
+  }
+  public Coord cantoInfEsq()
+  {
+    return new Coord(-tamanho.x/2, tamanho.y/2);
+  }
+  public Coord cantoInfDir()
+  {
+    return new Coord(tamanho.x/2, tamanho.y/2);
+  }
+  
   public boolean colideComEsq(Bola bola)
   {
     return bola.pos.x - Bola.raio < -tamanho.x / 2;
@@ -59,7 +76,7 @@ class Mesa
     strokeWeight(20);
     stroke(54, 32, 12);
     rect(-tamanho.x / 2, -tamanho.y / 2, tamanho.x, tamanho.y, 1.0f);
-    strokeWeight(1);
+    noStroke();
     rect(-tamanho.x / 2, -tamanho.y / 2, tamanho.x, tamanho.y, 1.0f);
     
     //caçapas

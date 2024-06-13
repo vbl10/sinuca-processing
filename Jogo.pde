@@ -1,14 +1,31 @@
-class Jogo
+class Jogo extends GuiComponente
 {
   public float escala = 1f;
   public Coord translacao = new Coord();
   public float rotacao = 0f;
 
+  public boolean pausa = false;
+  public float tempo = 0f;
+
   private Bola bolas[] = new Bola[16];
+  
   private boolean semMovimento = true;
-  private boolean preparandoTacada = false;
+  
+  private boolean tacadaPreparando = false;
+  private final float tacadaTamMax = 40f;
+  private final float tacadaVelMax = 190.0f;
+  public boolean tacadaTrajetoria = true;
+  public boolean tacadaTrajetoriaColisaoBola = true;
+  
   private boolean posicionandoBolaBranca = false;
   private boolean posicionandoBolaBrancaValido = false;
+  
+  private final int FERRAMENTA_JOGAR = 0;
+  private final int FERRAMENTA_MOVER = 1;
+  private int ferramenta = FERRAMENTA_JOGAR;
+  private boolean ferramentaMoverMovendo = false;
+  private Coord ferramentaMoverClique = new Coord();
+  private Coord ferramentaMoverTransAntiga = new Coord();
 
   Mesa mesa = new Mesa(new Coord(254.0f, 127.0f), 3.7f, 20.0f);
 
@@ -50,40 +67,125 @@ class Jogo
     rotate(rotacao);
   }
   
+  @Override
+  public GuiComponente contemMouse()
+  {
+    return this;
+  }
+  @Override
   public void aoMoverMouse()
   {
-    if (semMovimento && posicionandoBolaBranca)
+    if (ferramenta == FERRAMENTA_JOGAR)
     {
-      checarPosicaoBolaValida();
+      if (semMovimento && posicionandoBolaBranca)
+      {
+        checarPosicaoBolaValida();
+      }
+    }
+    else if (ferramenta == FERRAMENTA_MOVER)
+    {
+      if (ferramentaMoverMovendo)
+      {
+        translacao.def(
+          ferramentaMoverTransAntiga
+          .soma(mouse())
+          .sub(ferramentaMoverClique)
+        );
+      }
     }
   }
+  @Override
   public void aoClicarMouse()
   {
-    if (posicionandoBolaBranca)
+    if (ferramenta == FERRAMENTA_JOGAR && mouseButton == LEFT)
     {
-      if (posicionandoBolaBrancaValido)
+      if (posicionandoBolaBranca)
       {
-        posicionandoBolaBranca = false;
-        bolas[0].estaEmJogo = true;
-        bolas[0].vel.def(0f, 0f);
+        if (posicionandoBolaBrancaValido)
+        {
+          posicionandoBolaBranca = false;
+          bolas[0].estaEmJogo = true;
+          bolas[0].vel.def(0f, 0f);
+        }
+      }
+      else if (semMovimento)
+      {
+        Coord mouse = mouseParaMundo();
+        if (mouse.sub(bolas[0].pos).mag() < Bola.raio)
+        {
+          tacadaPreparando = !tacadaPreparando;
+        }
+        else if (tacadaPreparando)
+        {
+          tacadaPreparando = false;
+          
+          Coord bolaMouse = mouse.sub(bolas[0].pos);
+          float dist = bolaMouse.mag();
+          Coord direcao = bolaMouse.div(dist);
+          
+          bolas[0].vel = direcao.mult(map(max(min(dist - Bola.raio, tacadaTamMax), 0), 0, tacadaTamMax, 0, tacadaVelMax));
+        }
       }
     }
-    else if (semMovimento)
+    else if ((ferramenta == FERRAMENTA_MOVER && mouseButton == LEFT) || mouseButton == RIGHT)
     {
-      Coord mouse = mouseParaMundo();
-      if (mouse.sub(bolas[0].pos).mag() < Bola.raio)
+      ferramentaMoverMovendo = !ferramentaMoverMovendo;
+      if (ferramentaMoverMovendo)
       {
-        preparandoTacada = !preparandoTacada;
+        ferramenta = FERRAMENTA_MOVER;
+        ferramentaMoverClique.def(mouseX, mouseY);
+        ferramentaMoverTransAntiga.def(translacao);
       }
-      else if (preparandoTacada)
+      else
       {
-        preparandoTacada = false;
-        Coord mouseBola = bolas[0].pos.sub(mouse);
-        bolas[0].vel = mouseBola.unidade().mult(min(200.0f, max(10.0f, map(mouseBola.mag(), 10.0f, 70.0f, 1.0f, 200.0f))));
+        ferramenta = FERRAMENTA_JOGAR;
       }
     }
   }
-
+  @Override
+  public void aoRolarRodaMouse(MouseEvent evento)
+  {
+    Coord mouseTela = new Coord(mouseX, mouseY);
+    Coord mouseMundoAntigo = telaParaMundo(mouseTela);
+    
+    if (evento.getCount() > 0)
+        escala *= 1.2f;
+    else
+        escala /= 1.2f;
+  
+    Coord mouseMundoNovo = telaParaMundo(mouseTela);
+    
+    translacao.def(mundoParaTela(mouseMundoNovo.sub(mouseMundoAntigo)));
+  }
+  @Override
+  public void aoPressionarTecla()
+  {
+    if (key == 'r')
+    {
+      tpCronometro = millis();
+      reiniciar();
+    }
+    else if (key == 'j')
+    {
+      ferramenta = FERRAMENTA_JOGAR;
+    }
+    else if (key == 'm')
+    {
+      ferramenta = FERRAMENTA_MOVER;
+    }
+    else if (key == 'x' || key == 'z')
+    {
+      Coord mouseTela = new Coord(mouseX, mouseY);
+      Coord mouseMundoAntigo = telaParaMundo(mouseTela);
+      
+      rotacao += (key == 'x' ? 1f : -1f) * PI / 180f;
+    
+      Coord mouseMundoNovo = telaParaMundo(mouseTela);
+      
+      translacao.def(mundoParaTela(mouseMundoNovo.sub(mouseMundoAntigo)));      
+    }
+  }
+  
   private void checarPosicaoBolaValida()
   {
     posicionandoBolaBrancaValido = true;
@@ -104,28 +206,28 @@ class Jogo
     //colisão com caçapa
     for (int j = 0; j < 6; j++)
     {
-    Coord vCB = nBola.pos.sub(mesa.cacapas[j]);
-    float magCB = vCB.mag();
-    Coord unCB = vCB.div(magCB);
-    if (magCB < mesa.cacapaRaio)
-    {
+      Coord vCB = nBola.pos.sub(mesa.cacapas[j]);
+      float magCB = vCB.mag();
+      Coord unCB = vCB.div(magCB);
+      if (magCB < mesa.cacapaRaio)
+      {
         nBola.pos = nBola.pos.soma(unCB.mult(mesa.cacapaRaio - magCB));
         break;
-    }
+      }
     }
     
     //colisao nBola x bola
     for (int i = 0; i < bolas.length; i++)
     {
-    if (bolas[i].estaEmJogo)
-    {
+      if (bolas[i].estaEmJogo)
+      {
         Coord vIB = nBola.pos.sub(bolas[i].pos);
         if (vIB.mag() < Bola.raio * 2)
         {
-        posicionandoBolaBrancaValido = false;
-        break;
+          posicionandoBolaBrancaValido = false;
+          break;
         }
-    }
+      }
     }
     
     bolas[0].pos.def(nBola.pos);
@@ -133,6 +235,7 @@ class Jogo
 
   void reiniciar()
   {
+    tempo = 0f;
     bolas[0].pos.x = -mesa.tamanho.x / 4;
     bolas[0].pos.y = 0.0f;
     
@@ -176,11 +279,13 @@ class Jogo
     }
   }
 
-
+  @Override
   void atualizar(float dt)
   {
-    dt /= 10;
-    for (int passo = 0; passo < 10; passo++)
+    if (pausa) return;
+    tempo += dt;
+    dt /= 100;
+    for (int passo = 0; passo < 100; passo++)
     {
       boolean semMovimentoTmp = true;
       //atualizar pos com vel e colisao bola x mesa
@@ -266,8 +371,11 @@ class Jogo
     }
   }
   
+  @Override
   void desenhar()
   {
+    background(40,40,40);
+
     pushMatrix();
     aplicarMatriz();
     
@@ -286,13 +394,90 @@ class Jogo
       }
           
       //desenhar tacada
-      if (preparandoTacada)
+      if (tacadaPreparando)
       {
         Coord mouse = mouseParaMundo();
-        strokeWeight(1);
-        stroke(255, 0, bolas[0].pos.sub(mouse).mag() > 70.0f ? 255 : 0);
-        line(bolas[0].pos.x, bolas[0].pos.y, mouse.x, mouse.y);
+        Coord bolaMouse = mouse.sub(bolas[0].pos);
+        float distBolaMouse = bolaMouse.mag();
+        Coord direcao = bolaMouse.div(distBolaMouse);
         
+        if (tacadaTrajetoria)
+        {
+          Coord intercepcao = null;
+          Coord trajPosColisaoBolaBranca = null;
+          Coord trajPosColisaoBolaX = null;
+          Coord bolaX = new Coord();
+          
+          //calular colisao com bolas
+          if (tacadaTrajetoriaColisaoBola)
+          {
+            float distIntercepcao2 = 0f;
+
+            for (int i = 1; i < bolas.length; i++)
+            {
+              Coord intercepcaoBolaBola = new Coord();
+              if (intercepcaoTrajetoriaBolaBola(direcao, bolas[0].pos, bolas[i].pos, Bola.raio, intercepcaoBolaBola)
+                  && (distIntercepcao2 == 0f || intercepcaoBolaBola.sub(bolas[0].pos).mag2() < distIntercepcao2))
+              {
+                intercepcao = intercepcaoBolaBola;
+                distIntercepcao2 = intercepcao.sub(bolas[0].pos).mag2();
+                bolaX.def(bolas[i].pos);
+              }
+            }
+            if (intercepcao != null)
+            {
+              Coord A = bolas[0].pos;
+              Coord B = bolaX;
+              Coord C = intercepcao;
+              Coord uBC = B.sub(C).unidade();
+              Coord uAC = C.sub(A).unidade();
+              
+              trajPosColisaoBolaBranca = uAC.sub(uBC.mult(2f * uAC.ponto(uBC)));
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////continuar
+            }
+          }
+          
+          //intercepcao com paredes da mesa
+          if (intercepcao == null)
+          {
+            Coord intercepcaoMesa = new Coord();
+            
+            float[] abc = new float[3];
+            abc[0] = direcao.y;
+            abc[1] = -direcao.x;
+            abc[2] = -abc[0]*bolas[0].pos.x -abc[1]*bolas[0].pos.y;
+            
+            Coord A = mesa.cantoSupEsq().soma(Bola.raio, Bola.raio);
+            Coord B = mesa.cantoSupDir().soma(-Bola.raio, Bola.raio);
+            Coord C = mesa.cantoInfDir().soma(-Bola.raio, -Bola.raio);
+            Coord D = mesa.cantoInfEsq().soma(Bola.raio, -Bola.raio);
+            
+            if (
+              (intercepcaoRetaReta(abc, pontoPontoRetaABC(A, B), -1, intercepcaoMesa) && intercepcaoMesa.x > A.x && intercepcaoMesa.x < B.x) ||
+              (intercepcaoRetaReta(abc, pontoPontoRetaABC(B, C), -1, intercepcaoMesa) && intercepcaoMesa.y > B.y && intercepcaoMesa.y < C.y) ||
+              (intercepcaoRetaReta(abc, pontoPontoRetaABC(C, D), -1, intercepcaoMesa) && intercepcaoMesa.x > A.x && intercepcaoMesa.x < B.x) ||
+              (intercepcaoRetaReta(abc, pontoPontoRetaABC(D, A), -1, intercepcaoMesa) && intercepcaoMesa.y > B.y && intercepcaoMesa.y < C.y))
+            {
+              intercepcao = intercepcaoMesa;
+            }
+          }
+          
+          //desenhar
+          if (intercepcao != null)
+          {
+            
+            stroke(255,255,255,150);
+            strokeWeight(0.8);
+            noFill();
+            circle(intercepcao.x, intercepcao.y, Bola.raio * 2f - 0.8f);
+            line(bolas[0].pos.x, bolas[0].pos.y, intercepcao.x, intercepcao.y);
+          }
+        }  
+        //desenhar indicador de forçã
+        strokeWeight(1);
+        stroke(255, bolas[0].pos.sub(mouse).mag() > tacadaTamMax ? 255 : 0, 0);
+        Coord tacadaFim = bolas[0].pos.soma(direcao.mult(min(distBolaMouse, tacadaTamMax)));
+        line(bolas[0].pos.x, bolas[0].pos.y, tacadaFim.x, tacadaFim.y);
       }
     }
   
