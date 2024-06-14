@@ -4,21 +4,28 @@ class Jogo extends GuiComponente
   public Coord translacao = new Coord();
   public float rotacao = 0f;
 
+  public final int MODO_CORRIDA_CONTRA_O_TEMPO = 0;
+  public final int MODO_LIVRE = 1;
+  public int modoDeJogo = MODO_CORRIDA_CONTRA_O_TEMPO;
+
   public boolean pausa = false;
   public float tempo = 0f;
+  public float melhorTempo = Float.POSITIVE_INFINITY;
+  public boolean novoRecorde = false;
+  public boolean corridaContraTempoFalhou = false;
 
   private Bola bolas[] = new Bola[16];
   
   private boolean semMovimento = true;
   
   private boolean tacadaPreparando = false;
-  private final float tacadaTamMax = 40f;
   private final float tacadaVelMax = 190.0f;
+  private float tacadaPotencia = 0.0f;
   public boolean tacadaTrajetoria = true;
   public boolean tacadaTrajetoriaColisaoBola = true;
   
-  private boolean posicionandoBolaBranca = false;
-  private boolean posicionandoBolaBrancaValido = false;
+  public int posicionandoBola = -1;
+  private boolean posicionandoBolaValido = false;
   
   private final int FERRAMENTA_JOGAR = 0;
   private final int FERRAMENTA_MOVER = 1;
@@ -77,7 +84,7 @@ class Jogo extends GuiComponente
   {
     if (ferramenta == FERRAMENTA_JOGAR)
     {
-      if (semMovimento && posicionandoBolaBranca)
+      if (semMovimento && posicionandoBola != -1)
       {
         checarPosicaoBolaValida();
       }
@@ -99,13 +106,13 @@ class Jogo extends GuiComponente
   {
     if (ferramenta == FERRAMENTA_JOGAR && mouseButton == LEFT)
     {
-      if (posicionandoBolaBranca)
+      if (posicionandoBola != -1)
       {
-        if (posicionandoBolaBrancaValido)
+        if (posicionandoBolaValido)
         {
-          posicionandoBolaBranca = false;
-          bolas[0].estaEmJogo = true;
-          bolas[0].vel.def(0f, 0f);
+          bolas[posicionandoBola].estaEmJogo = true;
+          bolas[posicionandoBola].vel.def(0f, 0f);
+          posicionandoBola = -1;
         }
       }
       else if (semMovimento)
@@ -118,12 +125,8 @@ class Jogo extends GuiComponente
         else if (tacadaPreparando)
         {
           tacadaPreparando = false;
-          
-          Coord bolaMouse = mouse.sub(bolas[0].pos);
-          float dist = bolaMouse.mag();
-          Coord direcao = bolaMouse.div(dist);
-          
-          bolas[0].vel = direcao.mult(map(max(min(dist - Bola.raio, tacadaTamMax), 0), 0, tacadaTamMax, 0, tacadaVelMax));
+          Coord direcao = mouse.sub(bolas[0].pos).unidade();
+          bolas[0].vel = direcao.mult(map(tacadaPotencia, 0f, 1f, 0f, tacadaVelMax));
         }
       }
     }
@@ -145,24 +148,32 @@ class Jogo extends GuiComponente
   @Override
   public void aoRolarRodaMouse(MouseEvent evento)
   {
-    Coord mouseTela = new Coord(mouseX, mouseY);
-    Coord mouseMundoAntigo = telaParaMundo(mouseTela);
+    if (ferramenta == FERRAMENTA_MOVER)
+    {
+      Coord mouseTela = new Coord(mouseX, mouseY);
+      Coord mouseMundoAntigo = telaParaMundo(mouseTela);
+      
+      if (evento.getCount() > 0)
+          escala *= 1.2f;
+      else
+          escala /= 1.2f;
     
-    if (evento.getCount() > 0)
-        escala *= 1.2f;
-    else
-        escala /= 1.2f;
-  
-    Coord mouseMundoNovo = telaParaMundo(mouseTela);
-    
-    translacao.def(mundoParaTela(mouseMundoNovo.sub(mouseMundoAntigo)));
+      Coord mouseMundoNovo = telaParaMundo(mouseTela);
+      
+      translacao.def(mundoParaTela(mouseMundoNovo.sub(mouseMundoAntigo)));
+      ferramentaMoverClique.def(mouseX, mouseY);
+      ferramentaMoverTransAntiga.def(translacao);
+    }
+    else //if (ferramenta == FERRAMENTA_JOGAR)
+    {
+      tacadaPotencia = max(min(tacadaPotencia + (float)evento.getCount() * 0.05f, 1f), 0f);
+    }
   }
   @Override
   public void aoPressionarTecla()
   {
     if (key == 'r')
     {
-      tpCronometro = millis();
       reiniciar();
     }
     else if (key == 'j')
@@ -184,11 +195,16 @@ class Jogo extends GuiComponente
       
       translacao.def(mundoParaTela(mouseMundoNovo.sub(mouseMundoAntigo)));      
     }
+    else if (key == 'f')
+    {
+      for (int i = 1; i < bolas.length; i++)
+        bolas[i].estaEmJogo = false;
+    }
   }
   
   private void checarPosicaoBolaValida()
   {
-    posicionandoBolaBrancaValido = true;
+    posicionandoBolaValido = true;
     Bola nBola = new Bola();
     nBola.pos.def(mouseParaMundo());
     
@@ -224,17 +240,22 @@ class Jogo extends GuiComponente
         Coord vIB = nBola.pos.sub(bolas[i].pos);
         if (vIB.mag() < Bola.raio * 2)
         {
-          posicionandoBolaBrancaValido = false;
+          posicionandoBolaValido = false;
           break;
         }
       }
     }
     
-    bolas[0].pos.def(nBola.pos);
+    bolas[posicionandoBola].pos.def(nBola.pos);
   }
 
   void reiniciar()
   {
+    posicionandoBola = -1;
+    posicionandoBolaValido = false;
+    novoRecorde = false;
+    corridaContraTempoFalhou = false;
+    
     tempo = 0f;
     bolas[0].pos.x = -mesa.tamanho.x / 4;
     bolas[0].pos.y = 0.0f;
@@ -327,9 +348,13 @@ class Jogo extends GuiComponente
           {
             if (bolas[i].pos.sub(mesa.cacapas[j]).mag() < mesa.cacapaRaio)
             {
-              if (i == 0)
-                posicionandoBolaBranca = true;
-  
+              bolas[i].vel.def(0f, 0f);
+              if (i == 0 && modoDeJogo == MODO_CORRIDA_CONTRA_O_TEMPO)
+              {
+                corridaContraTempoFalhou = true;
+                pausa = true;
+                aplicacao.abrirPopUp(paginaFimDeJogo);
+              }
               bolas[i].estaEmJogo = false;
             }
           }
@@ -340,7 +365,9 @@ class Jogo extends GuiComponente
       if (semMovimento)
         break;
       
-      //colisao bola x bola
+      //resolver colisao estatica bola x bola
+      ArrayList<Integer> colisoes1 = new ArrayList<>();
+      ArrayList<Integer> colisoes2 = new ArrayList<>();
       for (int i = 0; i < bolas.length; i++)
       {
         if (bolas[i].estaEmJogo)
@@ -360,20 +387,57 @@ class Jogo extends GuiComponente
                 bolas[i].pos = bolas[i].pos.soma(corr);
                 bolas[j].pos = bolas[j].pos.sub(corr);
                 
-                Coord q = jiUn.mult(bolas[i].vel.sub(bolas[j].vel).ponto(jiUn));
-                bolas[i].vel = bolas[i].vel.sub(q);
-                bolas[j].vel = bolas[j].vel.soma(q);
+                colisoes1.add(i);
+                colisoes2.add(j);
               }
             }
           }
         }
+      }
+      
+      //resolver colisoes dinamicas bola x bola
+      for (int i = 0; i < colisoes1.size(); i++)
+      {
+        Bola b1 = bolas[colisoes1.get(i)];
+        Bola b2 = bolas[colisoes2.get(i)];
+        Coord b1b2Un = b2.pos.sub(b1.pos).unidade();
+        float velRelativa = b1.vel.ponto(b1b2Un) - b2.vel.ponto(b1b2Un);
+        if (velRelativa > 0f)
+        {
+          Coord q = b1b2Un.mult(velRelativa);
+          b1.vel = b1.vel.sub(q);
+          b2.vel = b2.vel.soma(q);
+        }
+      }
+    }
+    
+    if (modoDeJogo == MODO_CORRIDA_CONTRA_O_TEMPO)
+    {
+      boolean fimDeJogo = true;
+      for (int i = 1; i < bolas.length; i++)
+      {
+        if (bolas[i].estaEmJogo)
+        {
+          fimDeJogo = false;
+          break;
+        }
+      }
+      if (fimDeJogo)
+      {
+        pausa = true;
+        if (melhorTempo > tempo)
+        {
+          melhorTempo = tempo;
+          novoRecorde = true;
+        }
+        aplicacao.abrirPopUp(paginaFimDeJogo);
       }
     }
   }
   
   @Override
   void desenhar()
-  {
+  { //<>//
     background(40,40,40);
 
     pushMatrix();
@@ -388,9 +452,9 @@ class Jogo extends GuiComponente
         
     if (ferramenta == FERRAMENTA_JOGAR)
     {
-      if (posicionandoBolaBranca && semMovimento)
+      if (posicionandoBola != -1 && semMovimento)
       {
-        bolas[0].desenhar(posicionandoBolaBrancaValido);
+        bolas[posicionandoBola].desenhar(posicionandoBola, posicionandoBolaValido);
       }
           
       //desenhar tacada
@@ -415,13 +479,16 @@ class Jogo extends GuiComponente
 
             for (int i = 1; i < bolas.length; i++)
             {
-              Coord intercepcaoBolaBola = new Coord();
-              if (intercepcaoTrajetoriaBolaBola(direcao, bolas[0].pos, bolas[i].pos, Bola.raio, intercepcaoBolaBola)
-                  && (distIntercepcao2 == 0f || intercepcaoBolaBola.sub(bolas[0].pos).mag2() < distIntercepcao2))
+              if (bolas[i].estaEmJogo)
               {
-                intercepcao = intercepcaoBolaBola;
-                distIntercepcao2 = intercepcao.sub(bolas[0].pos).mag2();
-                bolaX.def(bolas[i].pos);
+                Coord intercepcaoBolaBola = new Coord();
+                if (intercepcaoTrajetoriaBolaBola(direcao, bolas[0].pos, bolas[i].pos, Bola.raio, intercepcaoBolaBola)
+                    && (distIntercepcao2 == 0f || intercepcaoBolaBola.sub(bolas[0].pos).mag2() < distIntercepcao2))
+                {
+                  intercepcao = intercepcaoBolaBola;
+                  distIntercepcao2 = intercepcao.sub(bolas[0].pos).mag2();
+                  bolaX.def(bolas[i].pos);
+                }
               }
             }
             if (intercepcao != null)
@@ -472,12 +539,7 @@ class Jogo extends GuiComponente
             circle(intercepcao.x, intercepcao.y, Bola.raio * 2f - 0.8f);
             line(bolas[0].pos.x, bolas[0].pos.y, intercepcao.x, intercepcao.y);
           }
-        }  
-        //desenhar indicador de forçã
-        strokeWeight(1);
-        stroke(255, bolas[0].pos.sub(mouse).mag() > tacadaTamMax ? 255 : 0, 0);
-        Coord tacadaFim = bolas[0].pos.soma(direcao.mult(min(distBolaMouse, tacadaTamMax)));
-        line(bolas[0].pos.x, bolas[0].pos.y, tacadaFim.x, tacadaFim.y);
+        }
       }
     }
   

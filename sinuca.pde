@@ -13,68 +13,27 @@ GuiPagina paginaCreditos = new GuiPagina();
 GuiPagina paginaJogoCorridaContraTempo = new GuiPagina();
 GuiPagina paginaJogoLivre = new GuiPagina();
 GuiPagina paginaJogoTutorial = new GuiPagina();
-
 GuiPagina paginaPausa = new GuiPagina();
+GuiPagina paginaFimDeJogo = new GuiPagina();
 
-
-GuiPagina paginaAtual = paginaInicial;
-GuiComponente componenteFocoMouse = null;
-GuiComponente componenteFocoTeclado = null;
-
-int tpCronometro = 0;
+Aplicacao aplicacao = new Aplicacao(paginaInicial);
 
 void mouseMoved()
 {
-  if (componenteFocoMouse == null || !componenteFocoMouse.mouseCapturado())
-  {  
-    GuiComponente novoFoco = paginaAtual.contemMouse(); 
-    if (novoFoco != componenteFocoMouse)
-    {
-      if (novoFoco != null)
-        novoFoco.aoMudarFocoMouse(true);
-      if (componenteFocoMouse != null)
-        componenteFocoMouse.aoMudarFocoMouse(false);
-      componenteFocoMouse = novoFoco;
-    }
-  }
-  if (componenteFocoMouse != null)
-  {
-    componenteFocoMouse.aoMoverMouse();
-  }
+  aplicacao.aoMoverMouse();
 }
 void mousePressed()
 {
-  if (componenteFocoMouse != null)
-  {
-    if (componenteFocoTeclado != componenteFocoMouse)
-    {
-      if (componenteFocoTeclado != null)
-        componenteFocoTeclado.aoMudarFocoTeclado(false);
-      componenteFocoTeclado = componenteFocoMouse;
-      componenteFocoTeclado.aoMudarFocoTeclado(true);
-    }
-    componenteFocoMouse.aoClicarMouse();
-  }
-  else if (componenteFocoTeclado != null)
-  {
-    componenteFocoTeclado.aoMudarFocoTeclado(false);
-    componenteFocoTeclado = null;
-  }
+  aplicacao.aoClicarMouse();
 }
 void mouseWheel(MouseEvent evento)
 {
-  if (componenteFocoMouse != null)
-  {
-    componenteFocoMouse.aoRolarRodaMouse(evento);
-  }
+  aplicacao.aoRolarRodaMouse(evento);
 }
 
 void keyPressed()
 {
-  if (componenteFocoTeclado != null)
-  {
-    componenteFocoTeclado.aoPressionarTecla();
-  }
+  aplicacao.aoPressionarTecla();
 }
 
 void setup()
@@ -98,12 +57,22 @@ void setup()
     @Override
     void aoAcionar(GuiBotao botao)
     {
-      paginaAtual = paginaJogoCorridaContraTempo;
+      jogo.modoDeJogo = jogo.MODO_CORRIDA_CONTRA_O_TEMPO;
       jogo.pausa = false;
       jogo.reiniciar();
+      aplicacao.mudarPagina(paginaJogoCorridaContraTempo, false);
     }
   }));
-  //botao jogo livre (redirecionar para pagina jogo livre)
+  paginaInicial.camadas.add(new GuiBotao("Livre", new Coord(20f, 335f), new Coord(200f, 30f), new GuiTratadorDeEventoBotao() {
+    @Override
+    void aoAcionar(GuiBotao botao)
+    {
+      jogo.modoDeJogo = jogo.MODO_LIVRE;
+      jogo.pausa = false;
+      jogo.reiniciar();
+      aplicacao.mudarPagina(paginaJogoLivre, false);
+    }
+  }));
   //botao tutorial (redirecionar para pagina tutorial)
   //botao controles (redirecionar para pagina controles)
   //botao dificuldade (redirecionar para pagina dificuldade)
@@ -131,9 +100,7 @@ void setup()
     void aoAcionar(GuiBotao botao)
     {
       jogo.pausa = true;
-      botao.aoMudarFocoTeclado(false);
-      componenteFocoTeclado = null;
-      paginaAtual.camadas.add(paginaPausa);
+      aplicacao.abrirPopUp(paginaPausa);
     }
   });
   
@@ -141,9 +108,28 @@ void setup()
   paginaJogoCorridaContraTempo.camadas.add(jogo);
   //botao pausa (modificar classe botao para suportar icones e usar icone de lista)
   paginaJogoCorridaContraTempo.camadas.add(botaoPausa);
-  paginaJogoCorridaContraTempo.camadas.add(new GuiTempo(new Coord(100f, 10f)));
-  
+  paginaJogoCorridaContraTempo.camadas.add(new GuiBolasForaDeJogo(new Coord(500f, 20f)));
+  paginaJogoCorridaContraTempo.camadas.add(new GuiTempo(new Coord(200f, 20f)));
+  paginaJogoCorridaContraTempo.camadas.add(new GuiPotenciaTacada(new Coord(15f, 100f), new Coord(20f, 400f)));
+  /*
+  paginaJogoCorridaContraTempo.camadas.add(new GuiInspetor(new Coord(20f, 100f), new GuiInspetorVarRef() {
+    @Override
+    String apurarValor()
+    {
+      float velMax = 0.0f;
+      for (int i = 0; i < 16; i++)
+      {
+        velMax = max(velMax, jogo.bolas[i].vel.mag());
+      }
+      return "" + velMax;
+    }
+  }));
+  */
   //PAGINA LIVRE ==========================================
+  paginaJogoLivre.camadas.add(jogo);
+  paginaJogoLivre.camadas.add(botaoPausa);
+  paginaJogoLivre.camadas.add(new GuiBolasForaDeJogo(new Coord(500f, 20f)));
+  paginaJogoLivre.camadas.add(new GuiPotenciaTacada(new Coord(15f, 100f), new Coord(20f, 400f)));
   
   //PAGINA TUTORIAL =======================================
   
@@ -153,7 +139,7 @@ void setup()
     @Override
     void aoAcionar(GuiBotao botao)
     {
-      paginaAtual.camadas.remove(paginaAtual.camadas.size() - 1);
+      aplicacao.fecharPopUp();
       jogo.pausa = false;
     }
   }));
@@ -161,7 +147,7 @@ void setup()
     @Override
     void aoAcionar(GuiBotao botao)
     {
-      paginaAtual.camadas.remove(paginaAtual.camadas.size() - 1);
+      aplicacao.fecharPopUp();
       jogo.pausa = false;
       jogo.reiniciar();
     }
@@ -170,8 +156,42 @@ void setup()
     @Override
     void aoAcionar(GuiBotao botao)
     {
-      paginaAtual.camadas.remove(paginaAtual.camadas.size() - 1);
-      paginaAtual = paginaInicial;
+      aplicacao.mudarPagina(paginaInicial, false);
+    }
+  }));
+  
+  //PAGINA FIM DE JOGO ====================================
+  paginaFimDeJogo.camadas.add(new GuiRotulo("Fim de Jogo", new Coord(200f, 200f)));
+  paginaFimDeJogo.camadas.add(new GuiInspetor(new Coord(200f, 230f), new GuiInspetorVarRef() {
+    @Override
+    String apurarValor()
+    {
+      if (jogo.corridaContraTempoFalhou)
+      {
+        return "Você perdeu!";
+      }
+      else
+      {
+        return 
+          "Seu tempo:    " + formatarTempo((int)jogo.tempo) + (jogo.novoRecorde ? " - Novo recorde!" : "") + "\n" +
+          "Melhor tempo: " + formatarTempo((int)jogo.melhorTempo);
+      }
+    }
+  }));
+  paginaFimDeJogo.camadas.add(new GuiBotao("Tentar novamente", new Coord(200f, 290f), new Coord(200f, 30f), new GuiTratadorDeEventoBotao() {
+    @Override
+    void aoAcionar(GuiBotao botao)
+    {
+      aplicacao.fecharPopUp();
+      jogo.reiniciar();
+      jogo.pausa = false;
+    }
+  }));
+  paginaFimDeJogo.camadas.add(new GuiBotao("Sair", new Coord(200f, 330f), new Coord(200f, 30f), new GuiTratadorDeEventoBotao() {
+    @Override
+    void aoAcionar(GuiBotao botao)
+    {
+      aplicacao.mudarPagina(paginaInicial, false);
     }
   }));
   
@@ -183,11 +203,8 @@ float dt = 0.0f;
 
 void draw()
 {
-  paginaAtual.atualizar(dt);
-  
-  background(0);
-  paginaAtual.desenhar();
-   
+  aplicacao.atualizar(dt);
+  aplicacao.desenhar();
   
   //medir tempo de geração desse quadro
   tp2 = millis();

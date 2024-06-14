@@ -2,7 +2,7 @@ class GuiComponente
 {
   GuiComponente contemMouse() { return null; }
   boolean mouseCapturado() { return false; }
-  void aoMoverMouse() { }
+  void aoMoverMouse() {}
   void aoMudarFocoMouse(boolean focado) {}
   void aoClicarMouse() {}
   void aoRolarRodaMouse(MouseEvent evento) {}

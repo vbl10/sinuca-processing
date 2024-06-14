@@ -1,3 +1,8 @@
+String formatarTempo(int segundos)
+{
+  return "" + segundos / 600 + "" + segundos / 60 % 10 + ":" + segundos % 60 / 10 + "" + segundos % 60 % 10;
+}
+
 Coord mouse()
 {
   return new Coord(mouseX, mouseY);
