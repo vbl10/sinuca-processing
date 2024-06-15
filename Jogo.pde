@@ -23,11 +23,18 @@ class Jogo extends GuiComponente
   
   private boolean semMovimento = true;
   
-  private boolean tacadaPreparando = false;
   private final float tacadaVelMax = 190.0f;
+  private final float tacadaRecuoMax = 20f;
+  private final float tacadaAnimacaoTempoAtingir = 0.15f;
+  private final float tacadaAnimacaoTempoTotal = 1f;
+  private boolean tacadaPreparando = false;
   private float tacadaPotencia = 0.0f;
   private boolean tacadaTrajetoria = true;
   private boolean tacadaTrajetoriaColisaoBola = true;
+  private Coord tacadaDirecao = new Coord();
+  private float tacadaAnimacaoTempo = 0f;
+  private boolean tacadaAnimando = false;
+  private Coord tacadaBolaPosAntiga = new Coord();
   
   public int posicionandoBola = -1;
   private boolean posicionandoBolaValido = false;
@@ -93,6 +100,10 @@ class Jogo extends GuiComponente
       {
         checarPosicaoBolaValida();
       }
+      else if (tacadaPreparando)
+      {
+        tacadaDirecao = mouseParaMundo().sub(bolas[0].pos).unidade();
+      }
     }
     else if (ferramenta == FERRAMENTA_MOVER)
     {
@@ -130,8 +141,7 @@ class Jogo extends GuiComponente
         else if (tacadaPreparando)
         {
           tacadaPreparando = false;
-          Coord direcao = mouse.sub(bolas[0].pos).unidade();
-          bolas[0].vel = direcao.mult(map(tacadaPotencia, 0f, 1f, 0f, tacadaVelMax));
+          tacadaAnimando = true;
         }
       }
     }
@@ -337,6 +347,22 @@ class Jogo extends GuiComponente
   {
     if (pausa) return;
     tempo += dt;
+    
+    if (tacadaAnimando)
+    {
+      if (tacadaAnimacaoTempo + dt >= tacadaAnimacaoTempoAtingir && tacadaAnimacaoTempo < tacadaAnimacaoTempoAtingir)
+      {
+        tacadaBolaPosAntiga.def(bolas[0].pos);
+        bolas[0].vel = tacadaDirecao.mult(map(tacadaPotencia, 0f, 1f, 0f, tacadaVelMax));
+      }
+      tacadaAnimacaoTempo += dt;
+      if (tacadaAnimacaoTempo >= tacadaAnimacaoTempoTotal)
+      {
+        tacadaAnimacaoTempo = 0f;
+        tacadaAnimando = false;
+      }
+    }
+    
     dt /= 100;
     for (int passo = 0; passo < 100; passo++)
     {
@@ -491,12 +517,7 @@ class Jogo extends GuiComponente
           
       //desenhar tacada
       if (tacadaPreparando)
-      {
-        Coord mouse = mouseParaMundo();
-        Coord bolaMouse = mouse.sub(bolas[0].pos);
-        float distBolaMouse = bolaMouse.mag();
-        Coord direcao = bolaMouse.div(distBolaMouse);
-        
+      {        
         if (tacadaTrajetoria)
         {
           Coord intercepcao = null;
@@ -514,7 +535,7 @@ class Jogo extends GuiComponente
               if (bolas[i].estaEmJogo)
               {
                 Coord intercepcaoBolaBola = new Coord();
-                if (intercepcaoTrajetoriaBolaBola(direcao, bolas[0].pos, bolas[i].pos, Bola.raio, intercepcaoBolaBola)
+                if (intercepcaoTrajetoriaBolaBola(tacadaDirecao, bolas[0].pos, bolas[i].pos, Bola.raio, intercepcaoBolaBola)
                     && (distIntercepcao2 == 0f || intercepcaoBolaBola.sub(bolas[0].pos).mag2() < distIntercepcao2))
                 {
                   intercepcao = intercepcaoBolaBola;
@@ -542,8 +563,8 @@ class Jogo extends GuiComponente
             Coord intercepcaoMesa = new Coord();
             
             float[] abc = new float[3];
-            abc[0] = direcao.y;
-            abc[1] = -direcao.x;
+            abc[0] = tacadaDirecao.y;
+            abc[1] = -tacadaDirecao.x;
             abc[2] = -abc[0]*bolas[0].pos.x -abc[1]*bolas[0].pos.y;
             
             Coord A = mesa.cantoSupEsq().soma(Bola.raio, Bola.raio);
@@ -564,7 +585,6 @@ class Jogo extends GuiComponente
           //desenhar
           if (intercepcao != null)
           {
-            
             stroke(255,255,255,150);
             strokeWeight(0.8);
             noFill();
@@ -572,6 +592,29 @@ class Jogo extends GuiComponente
             line(bolas[0].pos.x, bolas[0].pos.y, intercepcao.x, intercepcao.y);
           }
         }
+        
+      }
+      
+      //desenhar taco
+      if (tacadaPreparando || tacadaAnimando)
+      {
+        float deslocamento = 0f;
+        Coord bolaPos = new Coord();
+        if (tacadaAnimacaoTempo < tacadaAnimacaoTempoAtingir)
+        {
+          deslocamento = tacadaPotencia * tacadaRecuoMax * (1f - tacadaAnimacaoTempo * tacadaAnimacaoTempo / (tacadaAnimacaoTempoAtingir * tacadaAnimacaoTempoAtingir));
+          bolaPos.def(bolas[0].pos);
+        }
+        else
+        {
+          bolaPos.def(tacadaBolaPosAntiga);
+        }
+        Coord tacoPonta = bolaPos.sub(tacadaDirecao.mult(Bola.raio + deslocamento));
+        Coord tacoFim = bolaPos.sub(tacadaDirecao.mult(Bola.raio + 80f + deslocamento));
+        
+        strokeWeight(3);
+        stroke(116, 67, 21, min(255, max(0, map(tacadaAnimacaoTempo, tacadaAnimacaoTempoTotal, tacadaAnimacaoTempoAtingir, 0, 255))));
+        line(tacoFim.x, tacoFim.y, tacoPonta.x, tacoPonta.y);
       }
     }
   
