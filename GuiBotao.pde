@@ -5,8 +5,9 @@ interface GuiTratadorDeEventoBotao
 
 class GuiBotao extends GuiComponente
 {
-  Coord pos, tam;
-  String texto;
+  public Coord pos, tam;
+  public String texto = null;
+  public GuiImagem icone = null;
   GuiTratadorDeEventoBotao tratador;
   
   boolean focoMouse = false;
@@ -19,10 +20,18 @@ class GuiBotao extends GuiComponente
     this.texto = texto;
     this.tratador = tratador;
   }
-  GuiBotao(String texto, GuiTratadorDeEventoBotao tratador)
+  GuiBotao(PImage icone, Coord pos, Coord tam, GuiTratadorDeEventoBotao tratador)
   {
-    this.pos = new Coord();
-    this.tam = new Coord();
+    this.pos = pos;
+    this.tam = tam;
+    this.icone = new GuiImagem(icone, pos, new Coord(tam.y, tam.y), GuiImagem.MODO_CABER, new Coord(0.5f, 0.5f));
+    this.tratador = tratador;
+  }
+  GuiBotao(String texto, PImage icone, Coord pos, Coord tam, GuiTratadorDeEventoBotao tratador)
+  {
+    this.pos = pos;
+    this.tam = tam;
+    this.icone = new GuiImagem(icone, pos, new Coord(tam.y, tam.y), GuiImagem.MODO_CABER, new Coord(0.5f, 0.5f));
     this.texto = texto;
     this.tratador = tratador;
   }
@@ -64,8 +73,24 @@ class GuiBotao extends GuiComponente
     strokeWeight(3);
     fill(167 + (focoMouse ? 20 : 0));
     rect(pos.x, pos.y, tam.x, tam.y);
-    fill(255);
-    textAlign(CENTER, CENTER);
-    text(texto, pos.x + tam.x / 2, pos.y + tam.y / 2);
+    
+    if (icone != null)
+    {
+      icone.desenhar();
+    }
+    if (texto != null)
+    {
+      fill(255);
+      if (icone == null)
+      {
+        textAlign(CENTER, CENTER);
+        text(texto, pos.x + tam.x / 2, pos.y + tam.y / 2);
+      }
+      else
+      {
+        textAlign(LEFT, CENTER);
+        text(texto, pos.x + icone.tam.x, pos.y + tam.y / 2);
+      }
+    }
   }
 }
