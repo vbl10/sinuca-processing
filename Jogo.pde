@@ -8,6 +8,11 @@ class Jogo extends GuiComponente
   public final int MODO_LIVRE = 1;
   public int modoDeJogo = MODO_CORRIDA_CONTRA_O_TEMPO;
 
+  public static final int DIFICULDADE_FACIL = 0;
+  public static final int DIFICULDADE_MEDIO = 1;
+  public static final int DIFICULDADE_DIFICIL = 2;
+  private int dificuldade = DIFICULDADE_FACIL;
+
   public boolean pausa = false;
   public float tempo = 0f;
   public float melhorTempo = Float.POSITIVE_INFINITY;
@@ -21,8 +26,8 @@ class Jogo extends GuiComponente
   private boolean tacadaPreparando = false;
   private final float tacadaVelMax = 190.0f;
   private float tacadaPotencia = 0.0f;
-  public boolean tacadaTrajetoria = true;
-  public boolean tacadaTrajetoriaColisaoBola = true;
+  private boolean tacadaTrajetoria = true;
+  private boolean tacadaTrajetoriaColisaoBola = true;
   
   public int posicionandoBola = -1;
   private boolean posicionandoBolaValido = false;
@@ -247,6 +252,33 @@ class Jogo extends GuiComponente
     }
     
     bolas[posicionandoBola].pos.def(nBola.pos);
+  }
+
+  void definirDificuldade(int novaDificuldade)
+  {
+    if (novaDificuldade == DIFICULDADE_FACIL) //<>//
+    {
+      tacadaTrajetoria = true;
+      tacadaTrajetoriaColisaoBola = true;
+      dificuldade = novaDificuldade;
+    }
+    else if (novaDificuldade == DIFICULDADE_MEDIO)
+    {
+      tacadaTrajetoria = true;
+      tacadaTrajetoriaColisaoBola = false;
+      dificuldade = novaDificuldade;
+    }
+    else if (novaDificuldade == DIFICULDADE_DIFICIL)
+    {
+      tacadaTrajetoria = false;
+      tacadaTrajetoriaColisaoBola = false;
+      dificuldade = novaDificuldade;
+    }
+  }
+  
+  int pegarDificuldade()
+  {
+    return dificuldade;
   }
 
   void reiniciar()

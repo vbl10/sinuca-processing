@@ -53,7 +53,7 @@ void setup()
   
   //PAGINA INICIAL ========================================
   paginaInicial.camadas.add(new GuiRotulo("Sinucão do Kleyson", new Coord(20f, 270f)));
-  paginaInicial.camadas.add(new GuiBotao("Corrida Contra o Tempo", new Coord(20f, 300f), new Coord(200f, 30f), new GuiTratadorDeEventoBotao() {
+  paginaInicial.camadas.add(new GuiBotao("Corrida Contra o Tempo", loadImage("icone-jogar.png"), new Coord(20f, 300f), new Coord(200f, 30f), new GuiTratadorDeEventoBotao() {
     @Override
     void aoAcionar(GuiBotao botao)
     {
@@ -63,7 +63,7 @@ void setup()
       aplicacao.mudarPagina(paginaJogoCorridaContraTempo, false);
     }
   }));
-  paginaInicial.camadas.add(new GuiBotao("Livre", new Coord(20f, 335f), new Coord(200f, 30f), new GuiTratadorDeEventoBotao() {
+  paginaInicial.camadas.add(new GuiBotao("Livre", loadImage("icone-jogar.png"), new Coord(20f, 335f), new Coord(200f, 30f), new GuiTratadorDeEventoBotao() {
     @Override
     void aoAcionar(GuiBotao botao)
     {
@@ -75,9 +75,15 @@ void setup()
   }));
   //botao tutorial (redirecionar para pagina tutorial)
   //botao controles (redirecionar para pagina controles)
-  //botao dificuldade (redirecionar para pagina dificuldade)
+  paginaInicial.camadas.add(new GuiBotao("Dificuldade", new Coord(20f, 370f), new Coord(200f, 30f), new GuiTratadorDeEventoBotao() {
+    @Override
+    void aoAcionar(GuiBotao botao)
+    {
+      aplicacao.mudarPagina(paginaDificuldade, true);
+    }
+  }));
   //botao creditos (redirecionar para pagina creditos)
-
+  
   //PAGINA CONTROLES ======================================
   paginaControles.camadas.add(new GuiRotulo("Controles", new Coord(20f, 200f)));
   //rotulo com todos os controles
@@ -85,17 +91,42 @@ void setup()
   
   //PAGINA DIFICULDADE ====================================
   paginaDificuldade.camadas.add(new GuiRotulo("Dificuldade", new Coord(20f, 200f)));
-  //botao facil (jogo.tacadaTrajetoria = true; jogo.tacadaTrajetoriaColisaoBola = true)
-  //botao medio (jogo.tacadaTrajetoria = true; jogo.tacadaTrajetoriaColisaoBola = false)
-  //botao dificil (jogo.tacadaTrajetoria = false; jogo.tacadaTrajetoriaColisaoBola = false)
-  //botao voltar
+  ArrayList<GuiBotao> grupoRadioDificuldade = new ArrayList<>();
+  GuiTratadorDeEventoBotao tratadorRadioDificuldade = new GuiTratadorDeEventoBotao() {
+    @Override
+    void aoAtivar(GuiBotao botao, int id)
+    {
+      switch (id) //<>//
+      {
+        case 0:
+          jogo.definirDificuldade(Jogo.DIFICULDADE_FACIL);
+          break;
+        case 1:
+          jogo.definirDificuldade(Jogo.DIFICULDADE_MEDIO);
+          break;
+        case 2:
+          jogo.definirDificuldade(Jogo.DIFICULDADE_DIFICIL);
+          break;
+      }
+    }
+  };
+  paginaDificuldade.camadas.add(new GuiBotao("Facil", new Coord(20f, 300f), new Coord(200f, 30f), grupoRadioDificuldade, tratadorRadioDificuldade));
+  paginaDificuldade.camadas.add(new GuiBotao("Médio", new Coord(20f, 335f), new Coord(200f, 30f), grupoRadioDificuldade, tratadorRadioDificuldade));
+  paginaDificuldade.camadas.add(new GuiBotao("Difícil", new Coord(20f, 370f), new Coord(200f, 30f), grupoRadioDificuldade, tratadorRadioDificuldade));
+  paginaDificuldade.camadas.add(new GuiBotao("Voltar", new Coord(20f, 405f), new Coord(200f, 30f), new GuiTratadorDeEventoBotao() {
+    @Override
+    void aoAcionar(GuiBotao botao)
+    {
+      aplicacao.voltarPagina();
+    }
+  }));
   
   //PAGINA CREDITOS =======================================
   paginaCreditos.camadas.add(new GuiRotulo("Créditos", new Coord(20f, 200f)));
   //rotulo com integrantes do grupo
   //botao voltar
   
-  GuiBotao botaoPausa = new GuiBotao("P", new Coord(10f, 10f), new Coord(30f, 30f), new GuiTratadorDeEventoBotao() {
+  GuiBotao botaoPausa = new GuiBotao(loadImage("icone-lista.png"), new Coord(10f, 10f), new Coord(30f, 30f), new GuiTratadorDeEventoBotao() {
     @Override
     void aoAcionar(GuiBotao botao)
     {

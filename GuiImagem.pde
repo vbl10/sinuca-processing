@@ -27,9 +27,6 @@ class GuiImagem extends GuiComponente
   @Override
   void desenhar()
   {
-    noStroke();
-    fill(255,0,0);
-    rect(pos.x - 2, pos.y - 2, tam.x + 2, tam.y + 2);
     if (modo == MODO_ESTICAR)
     {
       image(imagem, pos.x, pos.y, tam.x, tam.y);
