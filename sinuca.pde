@@ -111,6 +111,7 @@ void setup()
     }
   };
   paginaDificuldade.camadas.add(new GuiBotao("Facil", new Coord(20f, 300f), new Coord(200f, 30f), grupoRadioDificuldade, tratadorRadioDificuldade));
+  grupoRadioDificuldade.get(0).alternarEstado(true);
   paginaDificuldade.camadas.add(new GuiBotao("Médio", new Coord(20f, 335f), new Coord(200f, 30f), grupoRadioDificuldade, tratadorRadioDificuldade));
   paginaDificuldade.camadas.add(new GuiBotao("Difícil", new Coord(20f, 370f), new Coord(200f, 30f), grupoRadioDificuldade, tratadorRadioDificuldade));
   paginaDificuldade.camadas.add(new GuiBotao("Voltar", new Coord(20f, 405f), new Coord(200f, 30f), new GuiTratadorDeEventoBotao() {
