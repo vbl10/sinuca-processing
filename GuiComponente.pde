@@ -10,6 +10,8 @@ class GuiComponente
   void aoPressionarTecla() {}
   void aoMudarFocoTeclado(boolean focado) {}
   
+  void aoMostrar() {}
+  
   void atualizar(float dt) {}
   void desenhar() {}
 }

@@ -22,6 +22,7 @@ class Aplicacao
         ultimasPaginas.add(pagina.camadas.get(0));
       pagina.camadas.clear();
       pagina.camadas.add(novaPagina);
+      novaPagina.aoMostrar();
     }
   }
   

@@ -18,6 +18,16 @@ GuiPagina paginaFimDeJogo = new GuiPagina();
 
 Aplicacao aplicacao = new Aplicacao(paginaInicial);
 
+GuiBotaoGrupoRadio grupoRadioFerramentas = new GuiBotaoGrupoRadio();
+GuiTratadorDeEventoBotao tratadorRadioFerramentas = new GuiTratadorDeEventoBotao() {
+  @Override
+  void aoEscolher(GuiBotao botao, int escolha)
+  {
+    jogo.ferramenta = escolha;
+  }
+};
+
+
 void mouseMoved()
 {
   aplicacao.aoMoverMouse();
@@ -91,27 +101,16 @@ void setup()
   
   //PAGINA DIFICULDADE ====================================
   paginaDificuldade.camadas.add(new GuiRotulo("Dificuldade", new Coord(20f, 200f)));
-  ArrayList<GuiBotao> grupoRadioDificuldade = new ArrayList<>();
+  GuiBotaoGrupoRadio grupoRadioDificuldade = new GuiBotaoGrupoRadio();
   GuiTratadorDeEventoBotao tratadorRadioDificuldade = new GuiTratadorDeEventoBotao() {
     @Override
-    void aoAtivar(GuiBotao botao, int id)
-    {
-      switch (id) //<>//
-      {
-        case 0:
-          jogo.definirDificuldade(Jogo.DIFICULDADE_FACIL);
-          break;
-        case 1:
-          jogo.definirDificuldade(Jogo.DIFICULDADE_MEDIO);
-          break;
-        case 2:
-          jogo.definirDificuldade(Jogo.DIFICULDADE_DIFICIL);
-          break;
-      }
+    void aoEscolher(GuiBotao botao, int escolha)
+    { //<>//
+      jogo.definirDificuldade(escolha);
     }
   };
   paginaDificuldade.camadas.add(new GuiBotao("Facil", new Coord(20f, 300f), new Coord(200f, 30f), grupoRadioDificuldade, tratadorRadioDificuldade));
-  grupoRadioDificuldade.get(0).alternarEstado(true);
+  grupoRadioDificuldade.atualizar(0);
   paginaDificuldade.camadas.add(new GuiBotao("Médio", new Coord(20f, 335f), new Coord(200f, 30f), grupoRadioDificuldade, tratadorRadioDificuldade));
   paginaDificuldade.camadas.add(new GuiBotao("Difícil", new Coord(20f, 370f), new Coord(200f, 30f), grupoRadioDificuldade, tratadorRadioDificuldade));
   paginaDificuldade.camadas.add(new GuiBotao("Voltar", new Coord(20f, 405f), new Coord(200f, 30f), new GuiTratadorDeEventoBotao() {
@@ -135,11 +134,16 @@ void setup()
       aplicacao.abrirPopUp(paginaPausa);
     }
   });
+  GuiBotao botaoFerramentaJogar = new GuiBotao(loadImage("icone-jogar.png"), new Coord(50f, 10f), new Coord(30f, 30f), grupoRadioFerramentas, tratadorRadioFerramentas);
+  GuiBotao botaoFerramentaMover = new GuiBotao(loadImage("icone-mover.png"), new Coord(90f, 10f), new Coord(30f, 30f), grupoRadioFerramentas, tratadorRadioFerramentas);
+  GuiBotao botaoFerramentaMoverBola = new GuiBotao(loadImage("icone-indicador.png"), new Coord(130f, 10f), new Coord(30f, 30f), grupoRadioFerramentas, tratadorRadioFerramentas);
   
   //PAGINA CORRIDA CONTRA O TEMPO =========================
   paginaJogoCorridaContraTempo.camadas.add(jogo);
   //botao pausa (modificar classe botao para suportar icones e usar icone de lista)
   paginaJogoCorridaContraTempo.camadas.add(botaoPausa);
+  paginaJogoCorridaContraTempo.camadas.add(botaoFerramentaJogar);
+  paginaJogoCorridaContraTempo.camadas.add(botaoFerramentaMover);
   paginaJogoCorridaContraTempo.camadas.add(new GuiBolasForaDeJogo(new Coord(500f, 20f)));
   paginaJogoCorridaContraTempo.camadas.add(new GuiTempo(new Coord(200f, 20f)));
   paginaJogoCorridaContraTempo.camadas.add(new GuiPotenciaTacada(new Coord(15f, 100f), new Coord(20f, 400f)));
@@ -160,6 +164,9 @@ void setup()
   //PAGINA LIVRE ==========================================
   paginaJogoLivre.camadas.add(jogo);
   paginaJogoLivre.camadas.add(botaoPausa);
+  paginaJogoLivre.camadas.add(botaoFerramentaJogar);
+  paginaJogoLivre.camadas.add(botaoFerramentaMover);
+  paginaJogoLivre.camadas.add(botaoFerramentaMoverBola);
   paginaJogoLivre.camadas.add(new GuiBolasForaDeJogo(new Coord(500f, 20f)));
   paginaJogoLivre.camadas.add(new GuiPotenciaTacada(new Coord(15f, 100f), new Coord(20f, 400f)));
   

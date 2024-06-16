@@ -4,7 +4,24 @@ class GuiTratadorDeEventoBotao
   //botoes normais
   void aoAcionar(GuiBotao botao) {}
   //botoes do tipo radio
-  void aoAtivar(GuiBotao botao, int id) {}
+  void aoEscolher(GuiBotao botao, int escolha) {}
+}
+
+class GuiBotaoGrupoRadio
+{
+  ArrayList<GuiBotao> grupo = new ArrayList<>();
+  final int adicionar(GuiBotao botao)
+  {
+    int novoId = grupo.size();
+    grupo.add(botao);
+    return novoId;
+  }
+  final void atualizar(int escolha)
+  {
+    for (int i = 0; i < grupo.size(); i++)
+      grupo.get(i).estado = false;
+    grupo.get(escolha).estado = true;
+  }
 }
 
 class GuiBotao extends GuiComponente
@@ -19,7 +36,7 @@ class GuiBotao extends GuiComponente
   
   boolean alternar = false;
   boolean estado = false;
-  ArrayList<GuiBotao> grupoRadio = null;
+  GuiBotaoGrupoRadio grupoRadio = null;
   int grupoRadioId = 0;
   
   GuiBotao(String texto, Coord pos, Coord tam, GuiTratadorDeEventoBotao tratador)
@@ -69,10 +86,9 @@ class GuiBotao extends GuiComponente
     this.texto = texto;
     this.tratador = tratador;
   }
-  GuiBotao(String texto, Coord pos, Coord tam, ArrayList<GuiBotao> grupoRadio, GuiTratadorDeEventoBotao tratador)
+  GuiBotao(String texto, Coord pos, Coord tam, GuiBotaoGrupoRadio grupoRadio, GuiTratadorDeEventoBotao tratador)
   {
-    this.grupoRadioId = grupoRadio.size();
-    grupoRadio.add(this);
+    this.grupoRadioId = grupoRadio.adicionar(this);
     this.grupoRadio = grupoRadio;
     this.alternar = true;
     this.pos = pos;
@@ -80,10 +96,9 @@ class GuiBotao extends GuiComponente
     this.texto = texto;
     this.tratador = tratador;
   }
-  GuiBotao(PImage icone, Coord pos, Coord tam, ArrayList<GuiBotao> grupoRadio, GuiTratadorDeEventoBotao tratador)
+  GuiBotao(PImage icone, Coord pos, Coord tam, GuiBotaoGrupoRadio grupoRadio, GuiTratadorDeEventoBotao tratador)
   {
-    this.grupoRadioId = grupoRadio.size();
-    grupoRadio.add(this);
+    this.grupoRadioId = grupoRadio.adicionar(this);
     this.grupoRadio = grupoRadio;
     this.alternar = true;
     this.pos = pos;
@@ -91,10 +106,9 @@ class GuiBotao extends GuiComponente
     this.icone = new GuiImagem(icone, pos, new Coord(tam.y, tam.y), GuiImagem.MODO_CABER, new Coord(0.5f, 0.5f));
     this.tratador = tratador;
   }
-  GuiBotao(String texto, PImage icone, Coord pos, Coord tam, ArrayList<GuiBotao> grupoRadio, GuiTratadorDeEventoBotao tratador)
+  GuiBotao(String texto, PImage icone, Coord pos, Coord tam, GuiBotaoGrupoRadio grupoRadio, GuiTratadorDeEventoBotao tratador)
   {
-    this.grupoRadioId = grupoRadio.size();
-    grupoRadio.add(this);
+    this.grupoRadioId = grupoRadio.adicionar(this);
     this.grupoRadio = grupoRadio;
     this.alternar = true;
     this.pos = pos;
@@ -108,16 +122,8 @@ class GuiBotao extends GuiComponente
   {
     if (grupoRadio != null && novoEstado == true && estado == false)
     {
-      for (int i = 0; i < grupoRadio.size(); i++)
-      {
-        if (grupoRadio.get(i).estado)
-        {
-          grupoRadio.get(i).estado = false;
-          break;
-        }        
-      }
-      estado = true;
-      tratador.aoAtivar(this, grupoRadioId);
+      grupoRadio.atualizar(grupoRadioId);
+      tratador.aoEscolher(this, grupoRadioId);
     }
     else estado = novoEstado;
   }

@@ -87,6 +87,12 @@ class Jogo extends GuiComponente
   }
   
   @Override
+  void aoMostrar()
+  {
+    grupoRadioFerramentas.atualizar(ferramenta);
+  }
+  
+  @Override
   public GuiComponente contemMouse()
   {
     return this;
@@ -158,6 +164,7 @@ class Jogo extends GuiComponente
       {
         ferramenta = FERRAMENTA_JOGAR;
       }
+      grupoRadioFerramentas.atualizar(ferramenta);
     }
   }
   @Override
@@ -194,10 +201,12 @@ class Jogo extends GuiComponente
     else if (key == 'j')
     {
       ferramenta = FERRAMENTA_JOGAR;
+      grupoRadioFerramentas.atualizar(ferramenta);
     }
     else if (key == 'm')
     {
       ferramenta = FERRAMENTA_MOVER;
+      grupoRadioFerramentas.atualizar(ferramenta);
     }
     else if (key == 'x' || key == 'z')
     {
