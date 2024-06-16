@@ -38,9 +38,14 @@ class GuiBolasForaDeJogo extends GuiComponente
   @Override
   public void aoClicarMouse()
   {
-    if (bolaSelecionada != -1)
+    if (jogo.modoDeJogo == Jogo.MODO_LIVRE)
     {
-      jogo.posicionandoBola = bolaSelecionada;
+      if (jogo.posicionarBolaSelecionada != -1) 
+        jogo.posicionarBolaSelecionada = -1;
+      else
+        jogo.posicionarBolaSelecionada = bolaSelecionada;
+      
+      jogo.definirFerramenta(Jogo.FERRAMENTA_POSICIONAR_BOLA);
     }
   }
   
@@ -59,14 +64,14 @@ class GuiBolasForaDeJogo extends GuiComponente
     stroke(100);
     rect(pos.x, pos.y, largura, altura);
     
-    if (bolaSelecionada != -1 || jogo.posicionandoBola != -1)
+    if (bolaSelecionada != -1 || jogo.posicionarBolaSelecionada != -1)
     {
       fill(130);
-      if (jogo.posicionandoBola != -1)
+      if (jogo.posicionarBolaSelecionada != -1)
       {
         stroke(200, 200, 0);
         strokeWeight(3);
-        rect(pos.x + jogo.posicionandoBola * tamCelula + espacamento, pos.y + espacamento, tamCelula, tamCelula);
+        rect(pos.x + jogo.posicionarBolaSelecionada * tamCelula + espacamento, pos.y + espacamento, tamCelula, tamCelula);
       }
       else
       {

@@ -23,7 +23,7 @@ GuiTratadorDeEventoBotao tratadorRadioFerramentas = new GuiTratadorDeEventoBotao
   @Override
   void aoEscolher(GuiBotao botao, int escolha)
   {
-    jogo.ferramenta = escolha;
+    jogo.definirFerramenta(escolha);
   }
 };
 
@@ -147,20 +147,7 @@ void setup()
   paginaJogoCorridaContraTempo.camadas.add(new GuiBolasForaDeJogo(new Coord(500f, 20f)));
   paginaJogoCorridaContraTempo.camadas.add(new GuiTempo(new Coord(200f, 20f)));
   paginaJogoCorridaContraTempo.camadas.add(new GuiPotenciaTacada(new Coord(15f, 100f), new Coord(20f, 400f)));
-  /*
-  paginaJogoCorridaContraTempo.camadas.add(new GuiInspetor(new Coord(20f, 100f), new GuiInspetorVarRef() {
-    @Override
-    String apurarValor()
-    {
-      float velMax = 0.0f;
-      for (int i = 0; i < 16; i++)
-      {
-        velMax = max(velMax, jogo.bolas[i].vel.mag());
-      }
-      return "" + velMax;
-    }
-  }));
-  */
+
   //PAGINA LIVRE ==========================================
   paginaJogoLivre.camadas.add(jogo);
   paginaJogoLivre.camadas.add(botaoPausa);

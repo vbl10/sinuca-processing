@@ -4,8 +4,8 @@ class Jogo extends GuiComponente
   public Coord translacao = new Coord();
   public float rotacao = 0f;
 
-  public final int MODO_CORRIDA_CONTRA_O_TEMPO = 0;
-  public final int MODO_LIVRE = 1;
+  public static final int MODO_CORRIDA_CONTRA_O_TEMPO = 0;
+  public static final int MODO_LIVRE = 1;
   public int modoDeJogo = MODO_CORRIDA_CONTRA_O_TEMPO;
 
   public static final int DIFICULDADE_FACIL = 0;
@@ -36,15 +36,18 @@ class Jogo extends GuiComponente
   private boolean tacadaAnimando = false;
   private Coord tacadaBolaPosAntiga = new Coord();
   
-  public int posicionandoBola = -1;
-  private boolean posicionandoBolaValido = false;
-  
-  private final int FERRAMENTA_JOGAR = 0;
-  private final int FERRAMENTA_MOVER = 1;
+  public static final int FERRAMENTA_JOGAR = 0;
+  public static final int FERRAMENTA_MOVER = 1;
+  public static final int FERRAMENTA_POSICIONAR_BOLA = 2;
   private int ferramenta = FERRAMENTA_JOGAR;
+  private int ferramentaAnterior = ferramenta;
+  
   private boolean ferramentaMoverMovendo = false;
   private Coord ferramentaMoverClique = new Coord();
   private Coord ferramentaMoverTransAntiga = new Coord();
+
+  public int posicionarBolaSelecionada= -1;
+  private boolean posicionarBolaValido = false;
 
   Mesa mesa = new Mesa(new Coord(254.0f, 127.0f), 3.7f, 20.0f);
 
@@ -100,15 +103,11 @@ class Jogo extends GuiComponente
   @Override
   public void aoMoverMouse()
   {
-    if (ferramenta == FERRAMENTA_JOGAR)
+    if (ferramenta == FERRAMENTA_POSICIONAR_BOLA)
     {
-      if (semMovimento && posicionandoBola != -1)
+      if (posicionarBolaSelecionada != -1)
       {
         checarPosicaoBolaValida();
-      }
-      else if (tacadaPreparando)
-      {
-        tacadaDirecao = mouseParaMundo().sub(bolas[0].pos).unidade();
       }
     }
     else if (ferramenta == FERRAMENTA_MOVER)
@@ -128,16 +127,7 @@ class Jogo extends GuiComponente
   {
     if (ferramenta == FERRAMENTA_JOGAR && mouseButton == LEFT)
     {
-      if (posicionandoBola != -1)
-      {
-        if (posicionandoBolaValido)
-        {
-          bolas[posicionandoBola].estaEmJogo = true;
-          bolas[posicionandoBola].vel.def(0f, 0f);
-          posicionandoBola = -1;
-        }
-      }
-      else if (semMovimento)
+      if (semMovimento)
       {
         Coord mouse = mouseParaMundo();
         if (mouse.sub(bolas[0].pos).mag() < Bola.raio)
@@ -156,15 +146,41 @@ class Jogo extends GuiComponente
       ferramentaMoverMovendo = !ferramentaMoverMovendo;
       if (ferramentaMoverMovendo)
       {
-        ferramenta = FERRAMENTA_MOVER;
+        definirFerramenta(FERRAMENTA_MOVER);
         ferramentaMoverClique.def(mouseX, mouseY);
         ferramentaMoverTransAntiga.def(translacao);
       }
       else
       {
-        ferramenta = FERRAMENTA_JOGAR;
+        definirFerramenta(ferramentaAnterior);
       }
-      grupoRadioFerramentas.atualizar(ferramenta);
+    }
+    else if (ferramenta == FERRAMENTA_POSICIONAR_BOLA && mouseButton == LEFT)
+    {
+      //se bola estiver selecionada, posicionar
+      if (posicionarBolaSelecionada != -1)
+      {
+        if (posicionarBolaValido)
+        {
+          bolas[posicionarBolaSelecionada].estaEmJogo = true;
+          bolas[posicionarBolaSelecionada].vel.def(0f, 0f);
+          posicionarBolaSelecionada= -1;
+        }
+      }
+      //se não, selecionar bola
+      else
+      {
+        Coord mouse = mouseParaMundo();
+        for (int i = 0; i < bolas.length; i++)
+        {
+          if (bolas[i].estaEmJogo && mouse.sub(bolas[i].pos).mag() < Bola.raio)
+          {
+            posicionarBolaSelecionada = i;
+            bolas[i].estaEmJogo = false;
+            break;
+          }
+        }
+      }
     }
   }
   @Override
@@ -200,13 +216,15 @@ class Jogo extends GuiComponente
     }
     else if (key == 'j')
     {
-      ferramenta = FERRAMENTA_JOGAR;
-      grupoRadioFerramentas.atualizar(ferramenta);
+      definirFerramenta(FERRAMENTA_JOGAR);
     }
     else if (key == 'm')
     {
-      ferramenta = FERRAMENTA_MOVER;
-      grupoRadioFerramentas.atualizar(ferramenta);
+      definirFerramenta(FERRAMENTA_MOVER);
+    }
+    else if (key == 'b')
+    {
+      definirFerramenta(FERRAMENTA_POSICIONAR_BOLA);
     }
     else if (key == 'x' || key == 'z')
     {
@@ -219,7 +237,7 @@ class Jogo extends GuiComponente
       
       translacao.def(mundoParaTela(mouseMundoNovo.sub(mouseMundoAntigo)));      
     }
-    else if (key == 'f')
+    else if (key == 'f' && modoDeJogo == MODO_LIVRE)
     {
       for (int i = 1; i < bolas.length; i++)
         bolas[i].estaEmJogo = false;
@@ -228,7 +246,7 @@ class Jogo extends GuiComponente
   
   private void checarPosicaoBolaValida()
   {
-    posicionandoBolaValido = true;
+    posicionarBolaValido = true;
     Bola nBola = new Bola();
     nBola.pos.def(mouseParaMundo());
     
@@ -264,13 +282,23 @@ class Jogo extends GuiComponente
         Coord vIB = nBola.pos.sub(bolas[i].pos);
         if (vIB.mag() < Bola.raio * 2)
         {
-          posicionandoBolaValido = false;
+          posicionarBolaValido = false;
           break;
         }
       }
     }
     
-    bolas[posicionandoBola].pos.def(nBola.pos);
+    bolas[posicionarBolaSelecionada].pos.def(nBola.pos);
+  }
+
+  void definirFerramenta(int novaFerramenta)
+  {
+    if (novaFerramenta != ferramenta)
+    {
+      ferramentaAnterior = ferramenta;
+      ferramenta = novaFerramenta;
+      grupoRadioFerramentas.atualizar(novaFerramenta);
+    }
   }
 
   void definirDificuldade(int novaDificuldade)
@@ -302,8 +330,8 @@ class Jogo extends GuiComponente
 
   void reiniciar()
   {
-    posicionandoBola = -1;
-    posicionandoBolaValido = false;
+    posicionarBolaSelecionada= -1;
+    posicionarBolaValido = false;
     novoRecorde = false;
     corridaContraTempoFalhou = false;
     
@@ -355,7 +383,13 @@ class Jogo extends GuiComponente
   void atualizar(float dt)
   {
     if (pausa) return;
+    
     tempo += dt;
+    
+    if (ferramenta == FERRAMENTA_JOGAR && tacadaPreparando)
+    {
+      tacadaDirecao = mouseParaMundo().sub(bolas[0].pos).unidade();
+    }
     
     if (tacadaAnimando)
     {
@@ -517,13 +551,13 @@ class Jogo extends GuiComponente
       if (bolas[i].estaEmJogo)
         bolas[i].desenhar(i);
         
-    if (ferramenta == FERRAMENTA_JOGAR)
+    if (ferramenta == FERRAMENTA_POSICIONAR_BOLA && posicionarBolaSelecionada != -1)
     {
-      if (posicionandoBola != -1 && semMovimento)
-      {
-        bolas[posicionandoBola].desenhar(posicionandoBola, posicionandoBolaValido);
-      }
-          
+      bolas[posicionarBolaSelecionada].desenhar(posicionarBolaSelecionada, posicionarBolaValido);
+    }
+    
+    if (ferramenta == FERRAMENTA_JOGAR)
+    {          
       //desenhar tacada
       if (tacadaPreparando)
       {        

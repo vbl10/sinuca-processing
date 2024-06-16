@@ -29,13 +29,24 @@ class Bola
   }
   public void desenhar(int numero, boolean posicaoValida)
   {
+    noStroke();
     if (!posicaoValida)
     {
       fill(255, 0, 0);
       circle(pos.x, pos.y, Bola.raio * 2 + 1);
     }
-    fill(cores.bola[numero]);
-    circle(pos.x, pos.y, Bola.raio * 2);    
+    if (numero < 9)
+    {
+      fill(cores.bola[numero]);
+      circle(pos.x, pos.y, Bola.raio * 2);
+    }
+    else
+    {
+      fill(255, 255, 255);
+      circle(pos.x, pos.y, Bola.raio * 2);
+      fill(cores.bola[numero]);
+      circle(pos.x, pos.y, Bola.raio * 2 - 1);      
+    }
   }
 };
 
