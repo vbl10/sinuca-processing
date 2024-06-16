@@ -2,7 +2,9 @@ import java.util.ArrayList;
 import ddf.minim.*; // Importa a biblioteca Minim para manipulação de áudio
 
 Minim minim;
-AudioPlayer somColisao;
+AudioSample somColisao;
+AudioSample somColisaoMesa;
+AudioSample somColisaoCacapa;
 AudioPlayer somImpacto; // Declara um objeto AudioPlayer para reproduzir o som de impacto
 AudioPlayer musicaFundo;
 
@@ -58,26 +60,50 @@ void setup()
   
   //SOM ==================================================
   minim = new Minim(this);
-  somColisao = minim.loadFile("Colisao.mp3");
+  somColisao = minim.loadSample("Colisao.mpga", 1024);
+  somColisaoMesa = minim.loadSample("ColisaoMesa.mp3", 1024);
+  somColisaoCacapa = minim.loadSample("ColisaoCacapa.mp3", 1024);
   somImpacto = minim.loadFile("Tacada.mp3");
   musicaFundo = minim.loadFile("MusicaFundo.mp3"); // Carrega a música de fundo
 
-  if (somColisao == null) {
+  if (somColisaoMesa == null) {
     println("Erro ao carregar o som de colisão.");
   } else {
     println("Som de colisão carregado com sucesso.");
-  }
+    somColisaoMesa.setGain(0); // Aumenta o volume do som de colisão em 10 dB
+ 
+ }
+   if (somColisaoCacapa == null) {
+    println("Erro ao carregar o som de colisão.");
+  } else {
+    println("Som de colisão carregado com sucesso.");
+    somColisaoCacapa.setGain(-10); // Aumenta o volume do som de colisão em 10 dB
+ 
+ }
+
+    if (somColisao == null) {
+    println("Erro ao carregar o som de colisão.");
+  } else {
+    println("Som de colisão carregado com sucesso.");
+    somColisao.setGain(-10); // Aumenta o volume do som de colisão em 10 dB
+ 
+ }
+
   if (somImpacto == null) {
     println("Erro ao carregar o som de impacto.");
   } else {
     println("Som de impacto carregado com sucesso.");
-  }
+    somImpacto.setGain(-10); // Aumenta o volume do som de impacto em 10 dB
+   
+ }
+
   if (musicaFundo == null) {
     println("Erro ao carregar a música de fundo.");
   } else {
     println("Música de fundo carregada com sucesso.");
+    musicaFundo.setGain(-35);
     musicaFundo.loop(); // Reproduz a música de fundo em loop
-  }
+}
   
   jogo.escala = width * 0.7f / jogo.mesa.tamanho.x;
   if (jogo.escala * jogo.mesa.tamanho.y > height * 0.7f)
@@ -92,21 +118,21 @@ void setup()
   
   //PAGINA INICIAL ========================================
   paginaInicial.camadas.add(new GuiRotulo("Sinucão do Kleyson", new Coord(20f, 270f)));
-  paginaInicial.camadas.add(new GuiBotao("Corrida Contra o Tempo", loadImage("icone-jogar.png"), new Coord(20f, 300f), new Coord(200f, 30f), new GuiTratadorDeEventoBotao() {
+  paginaInicial.camadas.add(new GuiBotao("Corrida Contra o Tempo", loadImage("icone-cronometro.png"), new Coord(20f, 300f), new Coord(220f, 40f), new GuiTratadorDeEventoBotao() {
     @Override
     void aoAcionar(GuiBotao botao)
     {
-      jogo.modoDeJogo = jogo.MODO_CORRIDA_CONTRA_O_TEMPO;
+      jogo.modoDeJogo = Jogo.MODO_CORRIDA_CONTRA_O_TEMPO;
       jogo.pausa = false;
       jogo.reiniciar();
       aplicacao.mudarPagina(paginaJogoCorridaContraTempo, false);
     }
   }));
-  paginaInicial.camadas.add(new GuiBotao("Livre", loadImage("icone-jogar.png"), new Coord(20f, 335f), new Coord(200f, 30f), new GuiTratadorDeEventoBotao() {
+  paginaInicial.camadas.add(new GuiBotao("Livre", loadImage("icone-zen.png"), new Coord(20f, 350f), new Coord(220f, 40f), new GuiTratadorDeEventoBotao() {
     @Override
     void aoAcionar(GuiBotao botao)
     {
-      jogo.modoDeJogo = jogo.MODO_LIVRE;
+      jogo.modoDeJogo = Jogo.MODO_LIVRE;
       jogo.pausa = false;
       jogo.reiniciar();
       aplicacao.mudarPagina(paginaJogoLivre, false);
@@ -114,7 +140,7 @@ void setup()
   }));
   //botao tutorial (redirecionar para pagina tutorial)
   //botao controles (redirecionar para pagina controles)
-  paginaInicial.camadas.add(new GuiBotao("Dificuldade", new Coord(20f, 370f), new Coord(200f, 30f), new GuiTratadorDeEventoBotao() {
+  paginaInicial.camadas.add(new GuiBotao("Dificuldade", new Coord(20f, 400f), new Coord(220f, 40f), new GuiTratadorDeEventoBotao() {
     @Override
     void aoAcionar(GuiBotao botao)
     {
@@ -127,7 +153,7 @@ void setup()
   paginaControles.camadas.add(new GuiRotulo("Controles", new Coord(20f, 200f)));
   //rotulo com todos os controles
   //botao voltar
-  
+   //<>//
   //PAGINA DIFICULDADE ====================================
   paginaDificuldade.camadas.add(new GuiRotulo("Dificuldade", new Coord(20f, 200f)));
   GuiBotaoGrupoRadio grupoRadioDificuldade = new GuiBotaoGrupoRadio();

@@ -48,6 +48,8 @@ class Jogo extends GuiComponente
 
   public int posicionarBolaSelecionada= -1;
   private boolean posicionarBolaValido = false;
+  
+  private int tempoDaUltimaColisaoBolaBola = 0;
 
   Mesa mesa = new Mesa(new Coord(254.0f, 127.0f), 3.7f, 20.0f);
 
@@ -303,7 +305,7 @@ class Jogo extends GuiComponente
 
   void definirDificuldade(int novaDificuldade)
   {
-    if (novaDificuldade == DIFICULDADE_FACIL) //<>//
+    if (novaDificuldade == DIFICULDADE_FACIL) //<>// //<>//
     {
       tacadaTrajetoria = true;
       tacadaTrajetoriaColisaoBola = true;
@@ -432,22 +434,38 @@ class Jogo extends GuiComponente
           {
             bolas[i].pos.x = -mesa.tamanho.x / 2 + Bola.raio;
             bolas[i].vel.x = -bolas[i].vel.x;
+            if (somColisaoMesa != null)
+            {
+              somColisaoMesa.trigger();
+            }
           }
           else if (mesa.colideComDir(bolas[i]))
           {
             bolas[i].pos.x = mesa.tamanho.x / 2 - Bola.raio;
             bolas[i].vel.x = -bolas[i].vel.x;
+            if (somColisaoMesa != null)
+            {
+              somColisaoMesa.trigger();
+            }
           }
           
           if (mesa.colideComSup(bolas[i]))
           {
             bolas[i].pos.y = -mesa.tamanho.y / 2 + Bola.raio;
             bolas[i].vel.y = -bolas[i].vel.y;
+            if (somColisaoMesa != null)
+            {
+              somColisaoMesa.trigger();
+            }
           }
           else if (mesa.colideComInf(bolas[i]))
           {
             bolas[i].pos.y = mesa.tamanho.y / 2 - Bola.raio;
             bolas[i].vel.y = -bolas[i].vel.y;
+            if (somColisaoMesa != null)
+            {
+              somColisaoMesa.trigger();
+            }
           }
           
           //colisão com caçapa
@@ -463,6 +481,7 @@ class Jogo extends GuiComponente
                 aplicacao.abrirPopUp(paginaFimDeJogo);
               }
               bolas[i].estaEmJogo = false;
+              somColisaoCacapa.trigger();
             }
           }
         }
@@ -515,10 +534,10 @@ class Jogo extends GuiComponente
           b1.vel = b1.vel.sub(q);
           b2.vel = b2.vel.soma(q);
           
-          if (somColisao != null)
+          if (somColisao != null && millis() - tempoDaUltimaColisaoBolaBola > 1)
           {
-            somColisao.rewind();
-            somColisao.play();
+            tempoDaUltimaColisaoBolaBola = millis();
+            somColisao.trigger();
           }  
         }
       }
@@ -551,7 +570,7 @@ class Jogo extends GuiComponente
   @Override
   void desenhar()
   { //<>//
-    background(40,40,40);
+    background(40,40,40); //<>//
 
     pushMatrix();
     aplicarMatriz();
