@@ -397,6 +397,12 @@ class Jogo extends GuiComponente
       {
         tacadaBolaPosAntiga.def(bolas[0].pos);
         bolas[0].vel = tacadaDirecao.mult(map(tacadaPotencia, 0f, 1f, 0f, tacadaVelMax));
+        
+        if (somImpacto != null)
+        {
+          somImpacto.rewind(); // Rebobina o som para o início
+          somImpacto.play(); // Reproduz o som de impacto
+        }
       }
       tacadaAnimacaoTempo += dt;
       if (tacadaAnimacaoTempo >= tacadaAnimacaoTempoTotal)
@@ -508,6 +514,12 @@ class Jogo extends GuiComponente
           Coord q = b1b2Un.mult(velRelativa);
           b1.vel = b1.vel.sub(q);
           b2.vel = b2.vel.soma(q);
+          
+          if (somColisao != null)
+          {
+            somColisao.rewind();
+            somColisao.play();
+          }  
         }
       }
     }

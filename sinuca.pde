@@ -1,4 +1,10 @@
 import java.util.ArrayList;
+import ddf.minim.*; // Importa a biblioteca Minim para manipulação de áudio
+
+Minim minim;
+AudioPlayer somColisao;
+AudioPlayer somImpacto; // Declara um objeto AudioPlayer para reproduzir o som de impacto
+AudioPlayer musicaFundo;
 
 //unidade de distância:  cm
 //unidade de tempo:      s
@@ -49,6 +55,29 @@ void keyPressed()
 void setup()
 {
   size(1200, 800);
+  
+  //SOM ==================================================
+  minim = new Minim(this);
+  somColisao = minim.loadFile("Colisao.mp3");
+  somImpacto = minim.loadFile("Tacada.mp3");
+  musicaFundo = minim.loadFile("MusicaFundo.mp3"); // Carrega a música de fundo
+
+  if (somColisao == null) {
+    println("Erro ao carregar o som de colisão.");
+  } else {
+    println("Som de colisão carregado com sucesso.");
+  }
+  if (somImpacto == null) {
+    println("Erro ao carregar o som de impacto.");
+  } else {
+    println("Som de impacto carregado com sucesso.");
+  }
+  if (musicaFundo == null) {
+    println("Erro ao carregar a música de fundo.");
+  } else {
+    println("Música de fundo carregada com sucesso.");
+    musicaFundo.loop(); // Reproduz a música de fundo em loop
+  }
   
   jogo.escala = width * 0.7f / jogo.mesa.tamanho.x;
   if (jogo.escala * jogo.mesa.tamanho.y > height * 0.7f)
