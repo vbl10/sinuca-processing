@@ -23,6 +23,7 @@ class Aplicacao
       pagina.camadas.clear();
       pagina.camadas.add(novaPagina);
       novaPagina.aoMostrar();
+      atualizarFocoMouse();
     }
   }
   
@@ -33,6 +34,8 @@ class Aplicacao
       pagina.camadas.clear();
       pagina.camadas.add(ultimasPaginas.get(ultimasPaginas.size() - 1));
       ultimasPaginas.remove(ultimasPaginas.size() - 1);
+      
+      atualizarFocoMouse();
     }
   }
   
@@ -44,13 +47,22 @@ class Aplicacao
       componenteFocoTeclado = null;  
     }
     pagina.camadas.add(popUp);
+    
+    atualizarFocoMouse();
   }
   
   public void fecharPopUp()
   {
     if (pagina.camadas.size() > 1)
     {
+      if (componenteFocoTeclado != null)
+      {
+        componenteFocoTeclado.aoMudarFocoTeclado(false);
+        componenteFocoTeclado = null;  
+      }
       pagina.camadas.remove(pagina.camadas.size() - 1);
+      
+      atualizarFocoMouse();
     }
   }
   
@@ -58,15 +70,7 @@ class Aplicacao
   {
     if (componenteFocoMouse == null || !componenteFocoMouse.mouseCapturado())
     {  
-      GuiComponente novoFoco = pagina.contemMouse(); 
-      if (novoFoco != componenteFocoMouse)
-      {
-        if (novoFoco != null)
-          novoFoco.aoMudarFocoMouse(true);
-        if (componenteFocoMouse != null)
-          componenteFocoMouse.aoMudarFocoMouse(false);
-        componenteFocoMouse = novoFoco;
-      }
+      atualizarFocoMouse();
     }
     if (componenteFocoMouse != null)
     {
@@ -116,5 +120,18 @@ class Aplicacao
   {
     background(0);
     pagina.desenhar();
+  }
+  
+  public void atualizarFocoMouse()
+  {
+    GuiComponente novoFoco = pagina.contemMouse(); 
+    if (novoFoco != componenteFocoMouse)
+    {
+      if (novoFoco != null)
+        novoFoco.aoMudarFocoMouse(true);
+      if (componenteFocoMouse != null)
+        componenteFocoMouse.aoMudarFocoMouse(false);
+      componenteFocoMouse = novoFoco;
+    }
   }
 }

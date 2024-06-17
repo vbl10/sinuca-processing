@@ -632,28 +632,29 @@ class Jogo extends GuiComponente
           }
           
           //intercepcao com paredes da mesa
-          if (intercepcao == null)
+        
+          Coord intercepcaoMesa = new Coord();
+          
+          float[] abc = new float[3];
+          abc[0] = tacadaDirecao.y;
+          abc[1] = -tacadaDirecao.x;
+          abc[2] = -abc[0]*bolas[0].pos.x -abc[1]*bolas[0].pos.y;
+          
+          Coord A = mesa.cantoSupEsq().soma(Bola.raio, Bola.raio);
+          Coord B = mesa.cantoSupDir().soma(-Bola.raio, Bola.raio);
+          Coord C = mesa.cantoInfDir().soma(-Bola.raio, -Bola.raio);
+          Coord D = mesa.cantoInfEsq().soma(Bola.raio, -Bola.raio);
+          
+          if (
+            (intercepcaoRetaReta(abc, pontoPontoRetaABC(A, B), -1, intercepcaoMesa) && intercepcaoMesa.x > A.x && intercepcaoMesa.x < B.x) ||
+            (intercepcaoRetaReta(abc, pontoPontoRetaABC(B, C), -1, intercepcaoMesa) && intercepcaoMesa.y > B.y && intercepcaoMesa.y < C.y) ||
+            (intercepcaoRetaReta(abc, pontoPontoRetaABC(C, D), -1, intercepcaoMesa) && intercepcaoMesa.x > A.x && intercepcaoMesa.x < B.x) ||
+            (intercepcaoRetaReta(abc, pontoPontoRetaABC(D, A), -1, intercepcaoMesa) && intercepcaoMesa.y > B.y && intercepcaoMesa.y < C.y))
           {
-            Coord intercepcaoMesa = new Coord();
-            
-            float[] abc = new float[3];
-            abc[0] = tacadaDirecao.y;
-            abc[1] = -tacadaDirecao.x;
-            abc[2] = -abc[0]*bolas[0].pos.x -abc[1]*bolas[0].pos.y;
-            
-            Coord A = mesa.cantoSupEsq().soma(Bola.raio, Bola.raio);
-            Coord B = mesa.cantoSupDir().soma(-Bola.raio, Bola.raio);
-            Coord C = mesa.cantoInfDir().soma(-Bola.raio, -Bola.raio);
-            Coord D = mesa.cantoInfEsq().soma(Bola.raio, -Bola.raio);
-            
-            if (
-              (intercepcaoRetaReta(abc, pontoPontoRetaABC(A, B), -1, intercepcaoMesa) && intercepcaoMesa.x > A.x && intercepcaoMesa.x < B.x) ||
-              (intercepcaoRetaReta(abc, pontoPontoRetaABC(B, C), -1, intercepcaoMesa) && intercepcaoMesa.y > B.y && intercepcaoMesa.y < C.y) ||
-              (intercepcaoRetaReta(abc, pontoPontoRetaABC(C, D), -1, intercepcaoMesa) && intercepcaoMesa.x > A.x && intercepcaoMesa.x < B.x) ||
-              (intercepcaoRetaReta(abc, pontoPontoRetaABC(D, A), -1, intercepcaoMesa) && intercepcaoMesa.y > B.y && intercepcaoMesa.y < C.y))
-            {
+            if (intercepcao == null)
               intercepcao = intercepcaoMesa;
-            }
+            else 
+              intercepcao = (intercepcao.sub(bolas[0].pos).mag() < intercepcaoMesa.sub(bolas[0].pos).mag() ? intercepcao : intercepcaoMesa);
           }
           
           //desenhar

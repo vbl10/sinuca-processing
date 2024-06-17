@@ -252,15 +252,14 @@ void setup()
   paginaJogoTutorial.camadas.add(new GuiFiltro(color(0, 0, 0, 200)));
   paginaJogoTutorial.camadas.add(new GuiRotulo("MODOS DE JOGO\n\n Modo de jogo 'Corrida Contra o Tempo':\n\n-Encaçape todas as bolas exceto a branca no menor tempo possível\n - Se encaçapar a bola branca, é fim de jogo!\n\n Modo de jogo 'Livre'\n Como não há jeito certo de jogar sinuca, esse modo permite que se \njogue como quiser.\n- Não há fim de jogo\nÉ possível recuperar qualquer bola encaçapada", new Coord(650f, 30f)));
   paginaJogoTutorial.camadas.add(new GuiRotulo("COMO JOGAR\n\nRealizar tacada:\n- Clique na bola branca para iniciar uma tacada\n- Use a roda do mouse para ajustar a força\n- Confira a quantidade de força que será aplicada a barra vertical no canto\n esquerdo\n- Mova o mouse para escolher a direção\n- Clique novamente para realizar a tacada\nObs.: Certifique-se de estar na ferramenta 'jogar'\n(botão de play no canto superior esquerdo)\n\nPausa:\n\n- Clique no botão de lista no canto superior esquerdopara pausar o jogo\n\nFerramenta 'mover':\n\n- Clique no botão de cruz no canto superior esquerdo da tela ou clique com o \nbotão direito em qualquer lugar para usar a usar a ferramenta 'mover'\n- Com a ferramenta 'mover', clique com o botão esquerdo paracomeçar a mover \na mesa e \nclique novamente para terminar.\n- Use a roda do mouse para ampliar ou reduzir o zoom\n- Use as teclas 'x' e 'z' para girar a mesa\n\nFerramenta 'posicionar bola   (modo de jogo 'livre'):\n\n\n- No modo de jogo 'livre', é possível 'posicionar bola'clicando no botão de mão\nno canto superior esquerdo.\n- Ao selecinar essa ferramenta, clique com o botãoesquerdo para mover uma bola\n- Clique novamente com o botão esquerdo quando terminar\n- Também é possível tirar bolas da mesa ou trazê-las de volta clicando na régua de bolas no topo da tela", new Coord(30f, 30f)));
-paginaJogoTutorial.camadas.add(new GuiBotao("Voltar", new Coord(1000f, 650f), new Coord(100f, 30f), new GuiTratadorDeEventoBotao() {
+  paginaJogoTutorial.camadas.add(new GuiBotao("Voltar", new Coord(1000f, 650f), new Coord(100f, 30f), new GuiTratadorDeEventoBotao() {
     @Override
       void aoAcionar(GuiBotao botao)
     {
       aplicacao.voltarPagina();
       jogo.pausa = false;
     }
-}
-  ));
+  }));
 
   //PAGINA CREDITOS =======================================
   paginaCreditos.camadas.add(guiImagem);
@@ -269,13 +268,11 @@ paginaJogoTutorial.camadas.add(new GuiBotao("Voltar", new Coord(1000f, 650f), ne
   paginaCreditos.camadas.add(new GuiRotulo("Ra:\n\n202101494\n202109940\n202100270\n202113651", new Coord(475f, 240f)));
   paginaCreditos.camadas.add(new GuiBotao("Voltar", new Coord(550f, 400f), new Coord(90f, 30f), new GuiTratadorDeEventoBotao() {
     @Override
-      void aoAcionar(GuiBotao botao)
+    void aoAcionar(GuiBotao botao)
     {
       aplicacao.voltarPagina();
-      jogo.pausa = false;
     }
-  }
-  ));
+  }));
   
   GuiBotao botaoPausa = new GuiBotao(loadImage("icone-lista.png"), new Coord(10f, 10f), new Coord(30f, 30f), new GuiTratadorDeEventoBotao() {
     @Override

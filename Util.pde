@@ -50,17 +50,18 @@ boolean intercepcaoTrajetoriaBolaBola(Coord direcaoA, Coord posA, Coord posB, fl
   if (direcaoA.x == 0f)
   {
     p.x = posA.x;
+    p.y = posB.y;
   }
   else if (direcaoA.x == 1f)
   {
     p.x = posB.x;
+    p.y = posA.y;
   }
   else
   {
     p.x = (posB.x/m + posB.y + m*posA.x - posA.y) / (m + 1/m);
+    p.y = m*(p.x - posA.x) + posA.y;
   }
-  
-  p.y = m*(p.x - posA.x) + posA.y;
 
   if (p.sub(posB).mag2() > 4f * raio * raio)
   {
