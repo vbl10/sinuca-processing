@@ -26,6 +26,12 @@ GuiPagina paginaFimDeJogo = new GuiPagina();
 
 Aplicacao aplicacao = new Aplicacao(paginaInicial);
 
+PImage img;            
+GuiImagem guiImagem;
+GuiCaixaDeTexto caixaDeTexto;
+ArrayList<String> textos;
+int textoAtualIndex = 0;
+
 GuiBotaoGrupoRadio grupoRadioFerramentas = new GuiBotaoGrupoRadio();
 GuiTratadorDeEventoBotao tratadorRadioFerramentas = new GuiTratadorDeEventoBotao() {
   @Override
@@ -116,9 +122,30 @@ void setup()
   
   textSize(16);
   
+  
+    //Imagem do fundo do menu
+  img = loadImage("imagemmenu.jpg");
+  Coord posicao = new Coord(0, 0); // Posição da imagem
+  Coord tamanho = new Coord(width, height); // Tamanho da imagem
+  int modo = GuiImagem.MODO_CORTAR; // Modo de exibição (MODO_ESTICAR, MODO_CORTAR, MODO_CABER)
+  Coord alinhamento = new Coord(0.5, 0.5); // Alinhamento da imagem (0.5, 0.5 é centralizado)
+  guiImagem = new GuiImagem(img, posicao, tamanho, modo, alinhamento);
+  textSize (18);
+  fill(255);
+  textos = new ArrayList<String>();
+  textos.add("História:\nRoberto, um  jovem estudante universitário, dedicado e determinado,\nestava sentindo o peso das responsabilidades acadêmicas.As longas horas de estudo,os trabalhos e as provas... ");
+  textos.add("... estavam começando a cobrar seu preço. Depois de uma semana intensa de aulas e estudos, decidi que precisaria de uma pausa.Então resolveu jogar sinuca em um lugar conhecido como : ''Sinucão do...");
+  textos.add("... Kleyson''. Em uma partida  conheceu Rafaela, agora Roberto quer impressionar essa garota .Precisa da sua ajuda!\nEscolha uma opção de jogo:");
+
+  //Caixa de texto da História
+
+  caixaDeTexto = new GuiCaixaDeTexto(textos.get(textoAtualIndex), new Coord(20, 20), new Coord(200, 200));
   //PAGINA INICIAL ========================================
-  paginaInicial.camadas.add(new GuiRotulo("Sinucão do Kleyson", new Coord(20f, 270f)));
-  paginaInicial.camadas.add(new GuiBotao("Corrida Contra o Tempo", loadImage("icone-cronometro.png"), new Coord(20f, 300f), new Coord(220f, 40f), new GuiTratadorDeEventoBotao() {
+
+  paginaInicial.camadas.add(guiImagem);
+  //PAGINA INICIAL ========================================
+  paginaInicial.camadas.add(new GuiRotulo("Sinucão do Kleyson", new Coord(495f, 300f)));
+  paginaInicial.camadas.add(new GuiBotao("Corrida Contra o Tempo", loadImage("icone-cronometro.png"), new Coord(495f, 340f), new Coord(220f, 40f), new GuiTratadorDeEventoBotao() {
     @Override
     void aoAcionar(GuiBotao botao)
     {
@@ -128,7 +155,7 @@ void setup()
       aplicacao.mudarPagina(paginaJogoCorridaContraTempo, false);
     }
   }));
-  paginaInicial.camadas.add(new GuiBotao("Livre", loadImage("icone-zen.png"), new Coord(20f, 350f), new Coord(220f, 40f), new GuiTratadorDeEventoBotao() {
+  paginaInicial.camadas.add(new GuiBotao("Livre", loadImage("icone-zen.png"), new Coord(495f, 390f), new Coord(220f, 40f), new GuiTratadorDeEventoBotao() {
     @Override
     void aoAcionar(GuiBotao botao)
     {
@@ -138,24 +165,68 @@ void setup()
       aplicacao.mudarPagina(paginaJogoLivre, false);
     }
   }));
-  //botao tutorial (redirecionar para pagina tutorial)
-  //botao controles (redirecionar para pagina controles)
-  paginaInicial.camadas.add(new GuiBotao("Dificuldade", new Coord(20f, 400f), new Coord(220f, 40f), new GuiTratadorDeEventoBotao() {
+  
+  paginaInicial.camadas.add(new GuiBotao("Dificuldade", new Coord(495f, 440f), new Coord(220f, 40f), new GuiTratadorDeEventoBotao() {
     @Override
     void aoAcionar(GuiBotao botao)
     {
       aplicacao.mudarPagina(paginaDificuldade, true);
     }
   }));
-  //botao creditos (redirecionar para pagina creditos)
   
-  //PAGINA CONTROLES ======================================
-  paginaControles.camadas.add(new GuiRotulo("Controles", new Coord(20f, 200f)));
-  //rotulo com todos os controles
-  //botao voltar
+  //========================================================
+  //Botão Tutorial
+  paginaInicial.camadas.add(new GuiBotao("Como jogar", new Coord(495f, 490f), new Coord(220f, 40f), new GuiTratadorDeEventoBotao() {
+    @Override
+      void aoAcionar(GuiBotao botao)
+    {
+      aplicacao.mudarPagina(paginaJogoTutorial, true);
+    }
+  }
+  ));
+  //Créditos==================================================
+  paginaInicial.camadas.add(new GuiBotao("Créditos", new Coord(495f,540f), new Coord(220f, 40f), new GuiTratadorDeEventoBotao() {
+    @Override
+      void aoAcionar(GuiBotao botao)
+    {
+      aplicacao.mudarPagina(paginaCreditos, true);
+    }
+  }
+  ));
+
+
+  //Caixa de texto história============================
+  paginaInicial.camadas.add(caixaDeTexto);
+  //===================================================
+
+  //Botão anterior
+  paginaInicial.camadas.add(new GuiBotao("Anterior", new Coord(20, 230), new Coord(80, 30), new GuiTratadorDeEventoBotao() {
+    @Override
+      void aoAcionar(GuiBotao botao) {
+      if (textoAtualIndex > 0) {
+        textoAtualIndex--;
+        caixaDeTexto.atualizarTexto(textos.get(textoAtualIndex));
+      }
+    }
+  }
+  ));
+  //======================================================
+  //Botão Proximmo
+  paginaInicial.camadas.add(new GuiBotao("Próximo", new Coord(145, 230), new Coord(80, 30), new GuiTratadorDeEventoBotao() {
+    @Override
+      void aoAcionar(GuiBotao botao) {
+      if (textoAtualIndex < textos.size() - 1) {
+        textoAtualIndex++;
+        caixaDeTexto.atualizarTexto(textos.get(textoAtualIndex));
+      }
+    }
+  }
+  ));
+  
    //<>//
   //PAGINA DIFICULDADE ====================================
-  paginaDificuldade.camadas.add(new GuiRotulo("Dificuldade", new Coord(20f, 200f)));
+  paginaDificuldade.camadas.add(guiImagem);
+  paginaDificuldade.camadas.add(new GuiRotulo("Dificuldade", new Coord(495f, 270f)));
   GuiBotaoGrupoRadio grupoRadioDificuldade = new GuiBotaoGrupoRadio();
   GuiTratadorDeEventoBotao tratadorRadioDificuldade = new GuiTratadorDeEventoBotao() {
     @Override
@@ -164,11 +235,11 @@ void setup()
       jogo.definirDificuldade(escolha);
     }
   };
-  paginaDificuldade.camadas.add(new GuiBotao("Facil", new Coord(20f, 300f), new Coord(200f, 30f), grupoRadioDificuldade, tratadorRadioDificuldade));
+  paginaDificuldade.camadas.add(new GuiBotao("Facil", new Coord(495f, 300f), new Coord(200f, 30f), grupoRadioDificuldade, tratadorRadioDificuldade));
   grupoRadioDificuldade.atualizar(0);
-  paginaDificuldade.camadas.add(new GuiBotao("Médio", new Coord(20f, 335f), new Coord(200f, 30f), grupoRadioDificuldade, tratadorRadioDificuldade));
-  paginaDificuldade.camadas.add(new GuiBotao("Difícil", new Coord(20f, 370f), new Coord(200f, 30f), grupoRadioDificuldade, tratadorRadioDificuldade));
-  paginaDificuldade.camadas.add(new GuiBotao("Voltar", new Coord(20f, 405f), new Coord(200f, 30f), new GuiTratadorDeEventoBotao() {
+  paginaDificuldade.camadas.add(new GuiBotao("Médio", new Coord(495f, 335f), new Coord(200f, 30f), grupoRadioDificuldade, tratadorRadioDificuldade));
+  paginaDificuldade.camadas.add(new GuiBotao("Difícil", new Coord(495f, 370f), new Coord(200f, 30f), grupoRadioDificuldade, tratadorRadioDificuldade));
+  paginaDificuldade.camadas.add(new GuiBotao("Voltar", new Coord(495f, 405f), new Coord(200f, 30f), new GuiTratadorDeEventoBotao() {
     @Override
     void aoAcionar(GuiBotao botao)
     {
@@ -176,10 +247,35 @@ void setup()
     }
   }));
   
+  //PAGINA TUTORIAL =======================================
+  paginaJogoTutorial.camadas.add(guiImagem);
+  paginaJogoTutorial.camadas.add(new GuiFiltro(color(0, 0, 0, 200)));
+  paginaJogoTutorial.camadas.add(new GuiRotulo("MODOS DE JOGO\n\n Modo de jogo 'Corrida Contra o Tempo':\n\n-Encaçape todas as bolas exceto a branca no menor tempo possível\n - Se encaçapar a bola branca, é fim de jogo!\n\n Modo de jogo 'Livre'\n Como não há jeito certo de jogar sinuca, esse modo permite que se \njogue como quiser.\n- Não há fim de jogo\nÉ possível recuperar qualquer bola encaçapada", new Coord(650f, 30f)));
+  paginaJogoTutorial.camadas.add(new GuiRotulo("COMO JOGAR\n\nRealizar tacada:\n- Clique na bola branca para iniciar uma tacada\n- Use a roda do mouse para ajustar a força\n- Confira a quantidade de força que será aplicada a barra vertical no canto\n esquerdo\n- Mova o mouse para escolher a direção\n- Clique novamente para realizar a tacada\nObs.: Certifique-se de estar na ferramenta 'jogar'\n(botão de play no canto superior esquerdo)\n\nPausa:\n\n- Clique no botão de lista no canto superior esquerdopara pausar o jogo\n\nFerramenta 'mover':\n\n- Clique no botão de cruz no canto superior esquerdo da tela ou clique com o \nbotão direito em qualquer lugar para usar a usar a ferramenta 'mover'\n- Com a ferramenta 'mover', clique com o botão esquerdo paracomeçar a mover \na mesa e \nclique novamente para terminar.\n- Use a roda do mouse para ampliar ou reduzir o zoom\n- Use as teclas 'x' e 'z' para girar a mesa\n\nFerramenta 'posicionar bola   (modo de jogo 'livre'):\n\n\n- No modo de jogo 'livre', é possível 'posicionar bola'clicando no botão de mão\nno canto superior esquerdo.\n- Ao selecinar essa ferramenta, clique com o botãoesquerdo para mover uma bola\n- Clique novamente com o botão esquerdo quando terminar\n- Também é possível tirar bolas da mesa ou trazê-las de volta clicando na régua de bolas no topo da tela", new Coord(30f, 30f)));
+paginaJogoTutorial.camadas.add(new GuiBotao("Voltar", new Coord(1000f, 650f), new Coord(100f, 30f), new GuiTratadorDeEventoBotao() {
+    @Override
+      void aoAcionar(GuiBotao botao)
+    {
+      aplicacao.voltarPagina();
+      jogo.pausa = false;
+    }
+}
+  ));
+
   //PAGINA CREDITOS =======================================
-  paginaCreditos.camadas.add(new GuiRotulo("Créditos", new Coord(20f, 200f)));
-  //rotulo com integrantes do grupo
-  //botao voltar
+  paginaCreditos.camadas.add(guiImagem);
+  paginaCreditos.camadas.add(new GuiFiltro(color(0, 0, 0, 200)));
+  paginaCreditos.camadas.add(new GuiRotulo("Nomes dos integrantes:\n\n Danilo Leonardi Vieira \nLuca do Amaral Navas\nVinicius Baumann Ladosky\nVitória Santos Carvalho", new Coord(600f, 240f)));
+  paginaCreditos.camadas.add(new GuiRotulo("Ra:\n\n202101494\n202109940\n202100270\n202113651", new Coord(475f, 240f)));
+  paginaCreditos.camadas.add(new GuiBotao("Voltar", new Coord(550f, 400f), new Coord(90f, 30f), new GuiTratadorDeEventoBotao() {
+    @Override
+      void aoAcionar(GuiBotao botao)
+    {
+      aplicacao.voltarPagina();
+      jogo.pausa = false;
+    }
+  }
+  ));
   
   GuiBotao botaoPausa = new GuiBotao(loadImage("icone-lista.png"), new Coord(10f, 10f), new Coord(30f, 30f), new GuiTratadorDeEventoBotao() {
     @Override
@@ -195,7 +291,6 @@ void setup()
   
   //PAGINA CORRIDA CONTRA O TEMPO =========================
   paginaJogoCorridaContraTempo.camadas.add(jogo);
-  //botao pausa (modificar classe botao para suportar icones e usar icone de lista)
   paginaJogoCorridaContraTempo.camadas.add(botaoPausa);
   paginaJogoCorridaContraTempo.camadas.add(botaoFerramentaJogar);
   paginaJogoCorridaContraTempo.camadas.add(botaoFerramentaMover);
@@ -211,10 +306,9 @@ void setup()
   paginaJogoLivre.camadas.add(botaoFerramentaMoverBola);
   paginaJogoLivre.camadas.add(new GuiBolasForaDeJogo(new Coord(500f, 20f)));
   paginaJogoLivre.camadas.add(new GuiPotenciaTacada(new Coord(15f, 100f), new Coord(20f, 400f)));
-  
-  //PAGINA TUTORIAL =======================================
-  
+    
   //PAGINA PAUSA ==========================================
+  paginaPausa.camadas.add(new GuiFiltro(color(0, 0, 0, 100)));
   paginaPausa.camadas.add(new GuiRotulo("Pausa", new Coord(20f, 200f)));
   paginaPausa.camadas.add(new GuiBotao("Continuar", new Coord(20f, 230f), new Coord(200f, 30f), new GuiTratadorDeEventoBotao() {
     @Override
@@ -224,7 +318,7 @@ void setup()
       jogo.pausa = false;
     }
   }));
-  paginaPausa.camadas.add(new GuiBotao("Reiniciar", new Coord(20f, 260f), new Coord(200f, 30f), new GuiTratadorDeEventoBotao() {
+  paginaPausa.camadas.add(new GuiBotao("Reiniciar", new Coord(20f, 270f), new Coord(200f, 30f), new GuiTratadorDeEventoBotao() {
     @Override
     void aoAcionar(GuiBotao botao)
     {
@@ -233,7 +327,7 @@ void setup()
       jogo.reiniciar();
     }
   }));
-  paginaPausa.camadas.add(new GuiBotao("Sair", new Coord(20f, 290f), new Coord(200f, 30f), new GuiTratadorDeEventoBotao() {
+  paginaPausa.camadas.add(new GuiBotao("Sair", new Coord(20f, 310f), new Coord(200f, 30f), new GuiTratadorDeEventoBotao() {
     @Override
     void aoAcionar(GuiBotao botao)
     {
@@ -242,6 +336,7 @@ void setup()
   }));
   
   //PAGINA FIM DE JOGO ====================================
+  paginaFimDeJogo.camadas.add(new GuiFiltro(color(0, 0, 0, 100)));
   paginaFimDeJogo.camadas.add(new GuiRotulo("Fim de Jogo", new Coord(200f, 200f)));
   paginaFimDeJogo.camadas.add(new GuiInspetor(new Coord(200f, 230f), new GuiInspetorVarRef() {
     @Override
