@@ -2,8 +2,8 @@ import java.util.ArrayList;
 
 class Aplicacao
 {
-  private GuiPagina pagina = new GuiPagina();
-  private ArrayList<GuiComponente> ultimasPaginas = new ArrayList<>();
+  private GuiPagina paginaAtual;
+  private ArrayList<GuiPagina> ultimasPaginas = new ArrayList<>();
   
   private GuiComponente componenteFocoMouse = null;
   private GuiComponente componenteFocoTeclado = null;
@@ -11,28 +11,30 @@ class Aplicacao
   
   public Aplicacao(GuiPagina paginaInicial)
   {
-    pagina.camadas.add(paginaInicial);
+    paginaAtual = paginaInicial;
   }
   
-  public void mudarPagina(GuiPagina novaPagina, boolean adicionarAoHistorico)
+  public void mudarPagina(GuiPagina novaPagina, boolean adicionarAoHistorico, boolean limparPopups)
   {
-    if (novaPagina != pagina.camadas.get(0))
+    if (novaPagina != paginaAtual)
     {
       if (adicionarAoHistorico)
-        ultimasPaginas.add(pagina.camadas.get(0));
-      pagina.camadas.clear();
-      pagina.camadas.add(novaPagina);
+        ultimasPaginas.add(paginaAtual);
+      if (limparPopups)
+        paginaAtual.popups.clear();
+      paginaAtual = novaPagina;
       novaPagina.aoMostrar();
       atualizarFocoMouse();
     }
   }
   
-  public void voltarPagina()
+  public void voltarPagina(boolean limparPopups)
   {
     if (!ultimasPaginas.isEmpty())
     {
-      pagina.camadas.clear();
-      pagina.camadas.add(ultimasPaginas.get(ultimasPaginas.size() - 1));
+      if (limparPopups)
+        paginaAtual.popups.clear();
+      paginaAtual = ultimasPaginas.get(ultimasPaginas.size() - 1);
       ultimasPaginas.remove(ultimasPaginas.size() - 1);
       
       atualizarFocoMouse();
@@ -46,21 +48,21 @@ class Aplicacao
       componenteFocoTeclado.aoMudarFocoTeclado(false);
       componenteFocoTeclado = null;  
     }
-    pagina.camadas.add(popUp);
+    paginaAtual.popups.add(popUp);
     
     atualizarFocoMouse();
   }
   
   public void fecharPopUp()
   {
-    if (pagina.camadas.size() > 1)
+    if (paginaAtual.popups.size() > 0)
     {
       if (componenteFocoTeclado != null)
       {
         componenteFocoTeclado.aoMudarFocoTeclado(false);
         componenteFocoTeclado = null;  
       }
-      pagina.camadas.remove(pagina.camadas.size() - 1);
+      paginaAtual.popups.remove(paginaAtual.popups.size() - 1);
       
       atualizarFocoMouse();
     }
@@ -113,18 +115,18 @@ class Aplicacao
   
   public void atualizar(float dt)
   {  
-    pagina.atualizar(dt);
+    paginaAtual.atualizar(dt);
   }
   
   public void desenhar()
   {
     background(0);
-    pagina.desenhar();
+    paginaAtual.desenhar();
   }
   
   public void atualizarFocoMouse()
   {
-    GuiComponente novoFoco = pagina.contemMouse(); 
+    GuiComponente novoFoco = paginaAtual.contemMouse(); 
     if (novoFoco != componenteFocoMouse)
     {
       if (novoFoco != null)

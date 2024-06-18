@@ -28,7 +28,7 @@ class Jogo extends GuiComponente
   private final float tacadaAnimacaoTempoAtingir = 0.15f;
   private final float tacadaAnimacaoTempoTotal = 1f;
   private boolean tacadaPreparando = false;
-  private float tacadaPotencia = 0.0f;
+  private float tacadaPotencia = 1.0f;
   private boolean tacadaTrajetoria = true;
   private boolean tacadaTrajetoriaColisaoBola = true;
   private Coord tacadaDirecao = new Coord();
@@ -49,7 +49,10 @@ class Jogo extends GuiComponente
   public int posicionarBolaSelecionada= -1;
   private boolean posicionarBolaValido = false;
   
-  private int tempoDaUltimaColisaoBolaBola = 0;
+  //o tamanho desse arranjo determina a qtd de reproduções simultâneas do somColisaoBolaBola permitida
+  private int[] tempoDasUltimasColisoesBolaBola = new int[]{0, 0, 0, 0, 0, 0};
+  private int ultimoCanalUsadoColisaoBolaBola = 0;
+  private int ultimoCanalUsadoColisaoMesa = 0;
 
   Mesa mesa = new Mesa(new Coord(254.0f, 127.0f), 3.7f, 20.0f);
 
@@ -303,7 +306,7 @@ class Jogo extends GuiComponente
     }
   }
 
-  void definirDificuldade(int novaDificuldade)
+  void definirDificuldade(int novaDificuldade) //<>//
   {
     if (novaDificuldade == DIFICULDADE_FACIL) //<>// //<>//
     {
@@ -381,6 +384,25 @@ class Jogo extends GuiComponente
     }
   }
 
+  void dispararSomColisaoBolaBola(float velRelativa)
+  {
+    if (somColisaoBolaBola != null)
+    {
+      ultimoCanalUsadoColisaoBolaBola = (ultimoCanalUsadoColisaoBolaBola + 1) % somColisaoBolaBola.length;
+      somColisaoBolaBola[ultimoCanalUsadoColisaoBolaBola].setGain((int)map(velRelativa, 0, tacadaVelMax, -30, 0));
+      somColisaoBolaBola[ultimoCanalUsadoColisaoBolaBola].trigger();
+    }
+  }
+  void dispararSomColisaoMesa(float vel)
+  {
+    if (somColisaoMesa != null)
+    {
+      ultimoCanalUsadoColisaoMesa = (ultimoCanalUsadoColisaoMesa + 1) % somColisaoMesa.length;
+      somColisaoMesa[ultimoCanalUsadoColisaoMesa].setGain((int)map(vel, 0, tacadaVelMax, -30, 0));
+      somColisaoMesa[ultimoCanalUsadoColisaoMesa].trigger();
+    }
+  }
+
   @Override
   void atualizar(float dt)
   {
@@ -402,8 +424,8 @@ class Jogo extends GuiComponente
         
         if (somImpacto != null)
         {
-          somImpacto.rewind(); // Rebobina o som para o início
-          somImpacto.play(); // Reproduz o som de impacto
+          somImpacto.setGain((int)map(max(0f, log(17f*tacadaPotencia)/log(17f)), 0, 1, -50, 0));
+          somImpacto.trigger();
         }
       }
       tacadaAnimacaoTempo += dt;
@@ -434,38 +456,26 @@ class Jogo extends GuiComponente
           {
             bolas[i].pos.x = -mesa.tamanho.x / 2 + Bola.raio;
             bolas[i].vel.x = -bolas[i].vel.x;
-            if (somColisaoMesa != null)
-            {
-              somColisaoMesa.trigger();
-            }
+            dispararSomColisaoMesa(bolas[i].vel.x);
           }
           else if (mesa.colideComDir(bolas[i]))
           {
             bolas[i].pos.x = mesa.tamanho.x / 2 - Bola.raio;
             bolas[i].vel.x = -bolas[i].vel.x;
-            if (somColisaoMesa != null)
-            {
-              somColisaoMesa.trigger();
-            }
+            dispararSomColisaoMesa(-bolas[i].vel.x);
           }
           
           if (mesa.colideComSup(bolas[i]))
           {
             bolas[i].pos.y = -mesa.tamanho.y / 2 + Bola.raio;
             bolas[i].vel.y = -bolas[i].vel.y;
-            if (somColisaoMesa != null)
-            {
-              somColisaoMesa.trigger();
-            }
+            dispararSomColisaoMesa(bolas[i].vel.y);
           }
           else if (mesa.colideComInf(bolas[i]))
           {
             bolas[i].pos.y = mesa.tamanho.y / 2 - Bola.raio;
             bolas[i].vel.y = -bolas[i].vel.y;
-            if (somColisaoMesa != null)
-            {
-              somColisaoMesa.trigger();
-            }
+            dispararSomColisaoMesa(-bolas[i].vel.y);
           }
           
           //colisão com caçapa
@@ -473,7 +483,6 @@ class Jogo extends GuiComponente
           {
             if (bolas[i].pos.sub(mesa.cacapas[j]).mag() < mesa.cacapaRaio)
             {
-              bolas[i].vel.def(0f, 0f);
               if (i == 0 && modoDeJogo == MODO_CORRIDA_CONTRA_O_TEMPO)
               {
                 corridaContraTempoFalhou = true;
@@ -481,6 +490,8 @@ class Jogo extends GuiComponente
                 aplicacao.abrirPopUp(paginaFimDeJogo);
               }
               bolas[i].estaEmJogo = false;
+              somColisaoCacapa.setGain((int)map(bolas[i].vel.mag(), 0, tacadaVelMax, -20, 0));
+              bolas[i].vel.def(0f, 0f);
               somColisaoCacapa.trigger();
             }
           }
@@ -534,10 +545,19 @@ class Jogo extends GuiComponente
           b1.vel = b1.vel.sub(q);
           b2.vel = b2.vel.soma(q);
           
-          if (somColisao != null && millis() - tempoDaUltimaColisaoBolaBola > 1)
+          if (somColisaoBolaBola != null)
           {
-            tempoDaUltimaColisaoBolaBola = millis();
-            somColisao.trigger();
+            dispararSomColisaoBolaBola(velRelativa);
+            int tempo = millis();
+            for (int j = 0; j < tempoDasUltimasColisoesBolaBola.length; j++)
+            {
+              if (tempo - tempoDasUltimasColisoesBolaBola[j] > 1)
+              {
+                tempoDasUltimasColisoesBolaBola[j] = tempo;
+                
+                break;
+              }
+            }
           }  
         }
       }
@@ -569,8 +589,8 @@ class Jogo extends GuiComponente
   
   @Override
   void desenhar()
-  { //<>//
-    background(40,40,40); //<>//
+  {
+    background(40,40,40);
 
     pushMatrix();
     aplicarMatriz();

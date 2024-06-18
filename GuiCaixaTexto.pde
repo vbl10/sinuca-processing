@@ -8,7 +8,7 @@ class GuiCaixaDeTexto extends GuiComponente {
     this.texto = texto;
     this.pos = pos;
     this.tam = tam;
-    this.corFundo = color(200, 255); // Cor branca com 80% de opacidade (200 de 255)
+    this.corFundo = color(255, 255, 255, 180); // Cor branca com 80% de opacidade (200 de 255)
   }
   
   public void atualizarTexto(String novoTexto) {

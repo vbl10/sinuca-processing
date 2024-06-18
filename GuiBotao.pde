@@ -1,5 +1,5 @@
 import java.util.ArrayList;
-class GuiTratadorDeEventoBotao
+class GuiBotaoTratadorDeEvento
 {
   //botoes normais
   void aoAcionar(GuiBotao botao) {}
@@ -29,7 +29,7 @@ class GuiBotao extends GuiComponente
   public Coord pos, tam;
   public String texto = null;
   public GuiImagem icone = null;
-  GuiTratadorDeEventoBotao tratador;
+  GuiBotaoTratadorDeEvento tratador;
   
   boolean focoMouse = false;
   boolean focoTeclado = false;
@@ -39,21 +39,21 @@ class GuiBotao extends GuiComponente
   GuiBotaoGrupoRadio grupoRadio = null;
   int grupoRadioId = 0;
   
-  GuiBotao(String texto, Coord pos, Coord tam, GuiTratadorDeEventoBotao tratador)
+  GuiBotao(String texto, Coord pos, Coord tam, GuiBotaoTratadorDeEvento tratador)
   {
     this.pos = pos;
     this.tam = tam;
     this.texto = texto;
     this.tratador = tratador;
   }
-  GuiBotao(PImage icone, Coord pos, Coord tam, GuiTratadorDeEventoBotao tratador)
+  GuiBotao(PImage icone, Coord pos, Coord tam, GuiBotaoTratadorDeEvento tratador)
   {
     this.pos = pos;
     this.tam = tam;
     this.icone = new GuiImagem(icone, pos, new Coord(tam.y, tam.y), GuiImagem.MODO_CABER, new Coord(0.5f, 0.5f));
     this.tratador = tratador;
   }
-  GuiBotao(String texto, PImage icone, Coord pos, Coord tam, GuiTratadorDeEventoBotao tratador)
+  GuiBotao(String texto, PImage icone, Coord pos, Coord tam, GuiBotaoTratadorDeEvento tratador)
   {
     this.pos = pos;
     this.tam = tam;
@@ -61,7 +61,7 @@ class GuiBotao extends GuiComponente
     this.texto = texto;
     this.tratador = tratador;
   }
-  GuiBotao(String texto, Coord pos, Coord tam, boolean alternar, GuiTratadorDeEventoBotao tratador)
+  GuiBotao(String texto, Coord pos, Coord tam, boolean alternar, GuiBotaoTratadorDeEvento tratador)
   {
     this.alternar = alternar;
     this.pos = pos;
@@ -69,7 +69,7 @@ class GuiBotao extends GuiComponente
     this.texto = texto;
     this.tratador = tratador;
   }
-  GuiBotao(PImage icone, Coord pos, Coord tam, boolean alternar, GuiTratadorDeEventoBotao tratador)
+  GuiBotao(PImage icone, Coord pos, Coord tam, boolean alternar, GuiBotaoTratadorDeEvento tratador)
   {
     this.alternar = alternar;
     this.pos = pos;
@@ -77,7 +77,7 @@ class GuiBotao extends GuiComponente
     this.icone = new GuiImagem(icone, pos, new Coord(tam.y, tam.y), GuiImagem.MODO_CABER, new Coord(0.5f, 0.5f));
     this.tratador = tratador;
   }
-  GuiBotao(String texto, PImage icone, Coord pos, Coord tam, boolean alternar, GuiTratadorDeEventoBotao tratador)
+  GuiBotao(String texto, PImage icone, Coord pos, Coord tam, boolean alternar, GuiBotaoTratadorDeEvento tratador)
   {
     this.alternar = alternar;
     this.pos = pos;
@@ -86,7 +86,7 @@ class GuiBotao extends GuiComponente
     this.texto = texto;
     this.tratador = tratador;
   }
-  GuiBotao(String texto, Coord pos, Coord tam, GuiBotaoGrupoRadio grupoRadio, GuiTratadorDeEventoBotao tratador)
+  GuiBotao(String texto, Coord pos, Coord tam, GuiBotaoGrupoRadio grupoRadio, GuiBotaoTratadorDeEvento tratador)
   {
     this.grupoRadioId = grupoRadio.adicionar(this);
     this.grupoRadio = grupoRadio;
@@ -96,7 +96,7 @@ class GuiBotao extends GuiComponente
     this.texto = texto;
     this.tratador = tratador;
   }
-  GuiBotao(PImage icone, Coord pos, Coord tam, GuiBotaoGrupoRadio grupoRadio, GuiTratadorDeEventoBotao tratador)
+  GuiBotao(PImage icone, Coord pos, Coord tam, GuiBotaoGrupoRadio grupoRadio, GuiBotaoTratadorDeEvento tratador)
   {
     this.grupoRadioId = grupoRadio.adicionar(this);
     this.grupoRadio = grupoRadio;
@@ -106,7 +106,7 @@ class GuiBotao extends GuiComponente
     this.icone = new GuiImagem(icone, pos, new Coord(tam.y, tam.y), GuiImagem.MODO_CABER, new Coord(0.5f, 0.5f));
     this.tratador = tratador;
   }
-  GuiBotao(String texto, PImage icone, Coord pos, Coord tam, GuiBotaoGrupoRadio grupoRadio, GuiTratadorDeEventoBotao tratador)
+  GuiBotao(String texto, PImage icone, Coord pos, Coord tam, GuiBotaoGrupoRadio grupoRadio, GuiBotaoTratadorDeEvento tratador)
   {
     this.grupoRadioId = grupoRadio.adicionar(this);
     this.grupoRadio = grupoRadio;
@@ -184,5 +184,70 @@ class GuiBotao extends GuiComponente
         text(texto, pos.x + icone.tam.x, pos.y + tam.y / 2);
       }
     }
+  }
+}
+
+class GuiBotaoRedirecionar extends GuiBotao
+{
+  public GuiPagina ref;
+  boolean adicionarAoHistorico;
+  boolean limparPopups;
+  public GuiBotaoRedirecionar(String texto, Coord pos, Coord tam, GuiPagina ref, boolean adicionarAoHistorico, boolean limparPopups)
+  {
+    super(texto, pos, tam, new GuiBotaoTratadorDeEvento() { @Override void aoAcionar(GuiBotao botao) { aplicacao.mudarPagina(ref, adicionarAoHistorico, limparPopups); }});
+    this.ref = ref;
+    this.adicionarAoHistorico = adicionarAoHistorico;
+    this.limparPopups = limparPopups;
+  }
+  public GuiBotaoRedirecionar(PImage icone, Coord pos, Coord tam, GuiPagina ref, boolean adicionarAoHistorico, boolean limparPopups)
+  {
+    super(icone, pos, tam, new GuiBotaoTratadorDeEvento() { @Override void aoAcionar(GuiBotao botao) { aplicacao.mudarPagina(ref, adicionarAoHistorico, limparPopups); }});
+    this.ref = ref;
+    this.adicionarAoHistorico = adicionarAoHistorico;
+    this.limparPopups = limparPopups;
+  }
+  public GuiBotaoRedirecionar(String texto, PImage icone, Coord pos, Coord tam, GuiPagina ref, boolean adicionarAoHistorico, boolean limparPopups)
+  {
+    super(texto, icone, pos, tam, new GuiBotaoTratadorDeEvento() { @Override void aoAcionar(GuiBotao botao) { aplicacao.mudarPagina(ref, adicionarAoHistorico, limparPopups); }});
+    this.ref = ref;
+    this.adicionarAoHistorico = adicionarAoHistorico;
+    this.limparPopups = limparPopups;
+  }
+}
+
+class GuiBotaoPopUp extends GuiBotao
+{
+  public GuiPagina popup;
+  public GuiBotaoPopUp(String texto, Coord pos, Coord tam, GuiPagina popup)
+  {
+    super(texto, pos, tam, new GuiBotaoTratadorDeEvento() { @Override void aoAcionar(GuiBotao botao) { aplicacao.abrirPopUp(popup); }});
+    this.popup = popup;
+  }
+  public GuiBotaoPopUp(PImage icone, Coord pos, Coord tam, GuiPagina popup)
+  {
+    super(icone, pos, tam, new GuiBotaoTratadorDeEvento() { @Override void aoAcionar(GuiBotao botao) { aplicacao.abrirPopUp(popup); }});
+    this.popup = popup;
+  }
+  public GuiBotaoPopUp(String texto, PImage icone, Coord pos, Coord tam, GuiPagina popup)
+  {
+    super(texto, icone, pos, tam, new GuiBotaoTratadorDeEvento() { @Override void aoAcionar(GuiBotao botao) { aplicacao.abrirPopUp(popup); }});
+    this.popup = popup;
+  }
+}
+
+
+class GuiBotaoVoltar extends GuiBotao
+{
+  public GuiBotaoVoltar(String texto, Coord pos, Coord tam, boolean limparPopups)
+  {
+    super(texto, pos, tam, new GuiBotaoTratadorDeEvento() { @Override void aoAcionar(GuiBotao botao) { aplicacao.voltarPagina(limparPopups); }});
+  }
+  public GuiBotaoVoltar(PImage icone, Coord pos, Coord tam, boolean limparPopups)
+  {
+    super(icone, pos, tam, new GuiBotaoTratadorDeEvento() { @Override void aoAcionar(GuiBotao botao) { aplicacao.voltarPagina(limparPopups); }});
+  }
+  public GuiBotaoVoltar(String texto, PImage icone, Coord pos, Coord tam, boolean limparPopups)
+  {
+    super(texto, icone, pos, tam, new GuiBotaoTratadorDeEvento() { @Override void aoAcionar(GuiBotao botao) { aplicacao.voltarPagina(limparPopups); }});
   }
 }
