@@ -27,7 +27,6 @@ class Jogo extends GuiComponente
   private final float tacadaRecuoMax = 20f;
   private final float tacadaAnimacaoTempoAtingir = 0.15f;
   private final float tacadaAnimacaoTempoTotal = 1f;
-  private boolean tacadaPreparando = false;
   private float tacadaPotencia = 1.0f;
   private boolean tacadaTrajetoria = true;
   private boolean tacadaTrajetoriaPosColisao = true;
@@ -134,16 +133,7 @@ class Jogo extends GuiComponente
     {
       if (semMovimento)
       {
-        Coord mouse = mouseParaMundo();
-        if (mouse.sub(bolas[0].pos).mag() < Bola.raio)
-        {
-          tacadaPreparando = !tacadaPreparando;
-        }
-        else if (tacadaPreparando)
-        {
-          tacadaPreparando = false;
-          tacadaAnimando = true;
-        }
+        tacadaAnimando = true;
       }
     }
     else if ((ferramenta == FERRAMENTA_MOVER && mouseButton == LEFT) || mouseButton == RIGHT)
@@ -410,7 +400,7 @@ class Jogo extends GuiComponente
     
     tempo += dt;
     
-    if (ferramenta == FERRAMENTA_JOGAR && tacadaPreparando)
+    if (semMovimento)
     {
       tacadaDirecao = mouseParaMundo().sub(bolas[0].pos).unidade();
     }
@@ -607,124 +597,120 @@ class Jogo extends GuiComponente
       bolas[posicionarBolaSelecionada].desenhar(posicionarBolaSelecionada, posicionarBolaValido);
     }
     
-    if (ferramenta == FERRAMENTA_JOGAR)
+    if (semMovimento)
     {          
       //desenhar tacada
-      if (tacadaPreparando)
-      {        
-        if (tacadaTrajetoria)
-        {
-          Coord intercepcao = null;
-          Coord trajPosColisaoBolaBranca = null;
-          Coord trajPosColisaoBolaX = null;
-          Coord bolaX = new Coord();
-          
-          //calcular colisao com bolas
-          float distIntercepcao2 = 0f;
+      if (tacadaTrajetoria)
+      {
+        Coord intercepcao = null;
+        Coord trajPosColisaoBolaBranca = null;
+        Coord trajPosColisaoBolaX = null;
+        Coord bolaX = new Coord();
+        
+        //calcular colisao com bolas
+        float distIntercepcao2 = 0f;
 
-          for (int i = 1; i < bolas.length; i++)
+        for (int i = 1; i < bolas.length; i++)
+        {
+          if (bolas[i].estaEmJogo)
           {
-            if (bolas[i].estaEmJogo)
+            Coord intercepcaoBolaBola = new Coord();
+            if (intercepcaoTrajetoriaBolaBola(tacadaDirecao, bolas[0].pos, bolas[i].pos, Bola.raio, intercepcaoBolaBola)
+                && (distIntercepcao2 == 0f || intercepcaoBolaBola.sub(bolas[0].pos).mag2() < distIntercepcao2))
             {
-              Coord intercepcaoBolaBola = new Coord();
-              if (intercepcaoTrajetoriaBolaBola(tacadaDirecao, bolas[0].pos, bolas[i].pos, Bola.raio, intercepcaoBolaBola)
-                  && (distIntercepcao2 == 0f || intercepcaoBolaBola.sub(bolas[0].pos).mag2() < distIntercepcao2))
-              {
-                intercepcao = intercepcaoBolaBola;
-                distIntercepcao2 = intercepcao.sub(bolas[0].pos).mag2();
-                bolaX.def(bolas[i].pos);
-              }
+              intercepcao = intercepcaoBolaBola;
+              distIntercepcao2 = intercepcao.sub(bolas[0].pos).mag2();
+              bolaX.def(bolas[i].pos);
             }
           }
-          
-          //intercepcao com paredes da mesa
-          Coord intercepcaoMesa = new Coord();
-          
-          float[] abc = new float[3];
-          abc[0] = tacadaDirecao.y;
-          abc[1] = -tacadaDirecao.x;
-          abc[2] = -abc[0]*bolas[0].pos.x -abc[1]*bolas[0].pos.y;
-          
-          Coord A = mesa.cantoSupEsq().soma(Bola.raio, Bola.raio);
-          Coord B = mesa.cantoSupDir().soma(-Bola.raio, Bola.raio);
-          Coord C = mesa.cantoInfDir().soma(-Bola.raio, -Bola.raio);
-          Coord D = mesa.cantoInfEsq().soma(Bola.raio, -Bola.raio);
-          
-          if (
-            (intercepcaoRetaReta(abc, pontoPontoRetaABC(A, B), -1, intercepcaoMesa) && intercepcaoMesa.x > A.x && intercepcaoMesa.x < B.x) ||
-            (intercepcaoRetaReta(abc, pontoPontoRetaABC(C, D), -1, intercepcaoMesa) && intercepcaoMesa.x > A.x && intercepcaoMesa.x < B.x)
-          ) {
-            trajPosColisaoBolaBranca = new Coord(tacadaDirecao.x, -tacadaDirecao.y);
-          }
-          else if (
-            (intercepcaoRetaReta(abc, pontoPontoRetaABC(B, C), -1, intercepcaoMesa) && intercepcaoMesa.y > B.y && intercepcaoMesa.y < C.y) ||
-            (intercepcaoRetaReta(abc, pontoPontoRetaABC(D, A), -1, intercepcaoMesa) && intercepcaoMesa.y > B.y && intercepcaoMesa.y < C.y)
-          ) {
-            trajPosColisaoBolaBranca = new Coord(-tacadaDirecao.x, tacadaDirecao.y);
-          }
-          
-          if (intercepcao == null || intercepcao.sub(bolas[0].pos).mag() > intercepcaoMesa.sub(bolas[0].pos).mag())
-          {
-            intercepcao = intercepcaoMesa;
-          }
-          else //primeira colisao foi relamente com outra bola, então predizer a trajetŕia da outra bola também (bolaX)
-          {
-            trajPosColisaoBolaX = bolaX.sub(intercepcao).unidade();
-            
-            //predizer trajetória pós-colisão da bola branca
-            Coord uBolaBrancaIntercepcao = intercepcao.sub(bolas[0].pos).unidade();
-            Coord uBolaXIntercepcao = intercepcao.sub(bolaX).unidade();
-            trajPosColisaoBolaBranca = uBolaBrancaIntercepcao.sub(uBolaXIntercepcao.mult(uBolaXIntercepcao.ponto(uBolaBrancaIntercepcao))).unidade();
-          }
-          
-          //desenhar
-          stroke(255,255,255,150);
-          strokeWeight(0.8);
-          noFill();
-          
-          //intercepcao
-          circle(intercepcao.x, intercepcao.y, Bola.raio * 2f - 0.8f);
-          
-          //trajetoria bola branca
-          line(bolas[0].pos.x, bolas[0].pos.y, intercepcao.x, intercepcao.y);
-          
-          if (tacadaTrajetoriaPosColisao)
-          {
-            //trajetoria bola branca pós-colisão
-            if (trajPosColisaoBolaBranca != null)
-              line(intercepcao.x, intercepcao.y, intercepcao.x + trajPosColisaoBolaBranca.x * 10f, intercepcao.y + trajPosColisaoBolaBranca.y * 10f);
-            
-            //trajetória bolaX pós-colisão
-            if (trajPosColisaoBolaX != null)
-              line(bolaX.x, bolaX.y, bolaX.x + trajPosColisaoBolaX.x * 10f, bolaX.y + trajPosColisaoBolaX.y * 10f);
-          }
         }
         
-      }
-      
-      //desenhar taco
-      if (tacadaPreparando || tacadaAnimando)
-      {
-        float deslocamento = 0f;
-        Coord bolaPos = new Coord();
-        if (tacadaAnimacaoTempo < tacadaAnimacaoTempoAtingir)
-        {
-          deslocamento = tacadaPotencia * tacadaRecuoMax * (1f - tacadaAnimacaoTempo * tacadaAnimacaoTempo / (tacadaAnimacaoTempoAtingir * tacadaAnimacaoTempoAtingir));
-          bolaPos.def(bolas[0].pos);
-        }
-        else
-        {
-          bolaPos.def(tacadaBolaPosAntiga);
-        }
-        Coord tacoPonta = bolaPos.sub(tacadaDirecao.mult(Bola.raio + deslocamento));
-        Coord tacoFim = bolaPos.sub(tacadaDirecao.mult(Bola.raio + 80f + deslocamento));
+        //intercepcao com paredes da mesa
+        Coord intercepcaoMesa = new Coord();
         
-        strokeWeight(3);
-        stroke(116, 67, 21, min(255, max(0, map(tacadaAnimacaoTempo, tacadaAnimacaoTempoTotal, tacadaAnimacaoTempoAtingir, 0, 255))));
-        line(tacoFim.x, tacoFim.y, tacoPonta.x, tacoPonta.y);
-      }
+        float[] abc = new float[3];
+        abc[0] = tacadaDirecao.y;
+        abc[1] = -tacadaDirecao.x;
+        abc[2] = -abc[0]*bolas[0].pos.x -abc[1]*bolas[0].pos.y;
+        
+        Coord A = mesa.cantoSupEsq().soma(Bola.raio, Bola.raio);
+        Coord B = mesa.cantoSupDir().soma(-Bola.raio, Bola.raio);
+        Coord C = mesa.cantoInfDir().soma(-Bola.raio, -Bola.raio);
+        Coord D = mesa.cantoInfEsq().soma(Bola.raio, -Bola.raio);
+        
+        if (
+          (intercepcaoRetaReta(abc, pontoPontoRetaABC(A, B), -1, intercepcaoMesa) && intercepcaoMesa.x > A.x && intercepcaoMesa.x < B.x) ||
+          (intercepcaoRetaReta(abc, pontoPontoRetaABC(C, D), -1, intercepcaoMesa) && intercepcaoMesa.x > A.x && intercepcaoMesa.x < B.x)
+        ) {
+          trajPosColisaoBolaBranca = new Coord(tacadaDirecao.x, -tacadaDirecao.y);
+        }
+        else if (
+          (intercepcaoRetaReta(abc, pontoPontoRetaABC(B, C), -1, intercepcaoMesa) && intercepcaoMesa.y > B.y && intercepcaoMesa.y < C.y) ||
+          (intercepcaoRetaReta(abc, pontoPontoRetaABC(D, A), -1, intercepcaoMesa) && intercepcaoMesa.y > B.y && intercepcaoMesa.y < C.y)
+        ) {
+          trajPosColisaoBolaBranca = new Coord(-tacadaDirecao.x, tacadaDirecao.y);
+        }
+        
+        if (intercepcao == null || intercepcao.sub(bolas[0].pos).mag() > intercepcaoMesa.sub(bolas[0].pos).mag())
+        {
+          intercepcao = intercepcaoMesa;
+        }
+        else //primeira colisao foi relamente com outra bola, então predizer a trajetŕia da outra bola também (bolaX)
+        {
+          trajPosColisaoBolaX = bolaX.sub(intercepcao).unidade();
+          
+          //predizer trajetória pós-colisão da bola branca
+          Coord uBolaBrancaIntercepcao = intercepcao.sub(bolas[0].pos).unidade();
+          Coord uBolaXIntercepcao = intercepcao.sub(bolaX).unidade();
+          trajPosColisaoBolaBranca = uBolaBrancaIntercepcao.sub(uBolaXIntercepcao.mult(uBolaXIntercepcao.ponto(uBolaBrancaIntercepcao))).unidade();
+        }
+        
+        //desenhar
+        stroke(255,255,255,150);
+        strokeWeight(0.8);
+        noFill();
+        
+        //intercepcao
+        circle(intercepcao.x, intercepcao.y, Bola.raio * 2f - 0.8f);
+        
+        //trajetoria bola branca
+        line(bolas[0].pos.x, bolas[0].pos.y, intercepcao.x, intercepcao.y);
+        
+        if (tacadaTrajetoriaPosColisao)
+        {
+          //trajetoria bola branca pós-colisão
+          if (trajPosColisaoBolaBranca != null)
+            line(intercepcao.x, intercepcao.y, intercepcao.x + trajPosColisaoBolaBranca.x * 10f, intercepcao.y + trajPosColisaoBolaBranca.y * 10f);
+          
+          //trajetória bolaX pós-colisão
+          if (trajPosColisaoBolaX != null)
+            line(bolaX.x, bolaX.y, bolaX.x + trajPosColisaoBolaX.x * 10f, bolaX.y + trajPosColisaoBolaX.y * 10f);
+        }
+      } 
     }
-  
+    
+    //desenhar taco
+    if (tacadaAnimando || semMovimento)
+    {
+      float deslocamento = 0f;
+      Coord bolaPos = new Coord();
+      if (tacadaAnimacaoTempo < tacadaAnimacaoTempoAtingir)
+      {
+        deslocamento = tacadaPotencia * tacadaRecuoMax * (1f - tacadaAnimacaoTempo * tacadaAnimacaoTempo / (tacadaAnimacaoTempoAtingir * tacadaAnimacaoTempoAtingir));
+        bolaPos.def(bolas[0].pos);
+      }
+      else
+      {
+        bolaPos.def(tacadaBolaPosAntiga);
+      }
+      Coord tacoPonta = bolaPos.sub(tacadaDirecao.mult(Bola.raio + deslocamento));
+      Coord tacoFim = bolaPos.sub(tacadaDirecao.mult(Bola.raio + 80f + deslocamento));
+      
+      strokeWeight(3);
+      stroke(116, 67, 21, min(255, max(0, map(tacadaAnimacaoTempo, tacadaAnimacaoTempoTotal, tacadaAnimacaoTempoAtingir, 0, 255))));
+      line(tacoFim.x, tacoFim.y, tacoPonta.x, tacoPonta.y);
+    }
+ 
     popMatrix();
     
   }
