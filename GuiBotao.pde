@@ -120,10 +120,13 @@ class GuiBotao extends GuiComponente
   
   void alternarEstado(boolean novoEstado)
   {
-    if (grupoRadio != null && novoEstado == true && estado == false)
+    if (grupoRadio != null) //<>//
     {
-      grupoRadio.atualizar(grupoRadioId);
-      tratador.aoEscolher(this, grupoRadioId);
+      if (novoEstado == true && estado == false)
+      {
+        grupoRadio.atualizar(grupoRadioId);
+        tratador.aoEscolher(this, grupoRadioId);
+      }
     }
     else estado = novoEstado;
   }
